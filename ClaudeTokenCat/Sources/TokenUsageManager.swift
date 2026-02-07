@@ -126,9 +126,16 @@ final class TokenUsageManager: ObservableObject {
         }
     }
 
+    // MARK: - API Key
+
+    var hasAPIKey: Bool {
+        KeychainManager.loadAPIKey() != nil
+    }
+
     // MARK: - API Polling (placeholder)
 
     func startPolling() {
+        guard let _ = KeychainManager.loadAPIKey() else { return }
         pollTimer?.invalidate()
         pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
             self?.fetchUsage()

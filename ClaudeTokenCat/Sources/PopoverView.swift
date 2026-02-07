@@ -6,6 +6,8 @@ struct PopoverView: View {
     @ObservedObject var usageManager: TokenUsageManager
     @State private var showingAPIKeyInput = false
     @State private var apiKeyText = ""
+    @State private var hasStoredKey = false
+    @State private var keychainError: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -121,7 +123,7 @@ struct PopoverView: View {
                         .font(.caption)
                         .fontWeight(.medium)
                     HStack {
-                        SecureField("sk-ant-...", text: $apiKeyText)
+                        SecureField(hasStoredKey ? "••••••••" : "sk-ant-...", text: $apiKeyText)
                             .textFieldStyle(.roundedBorder)
                             .font(.system(.caption, design: .monospaced))
                         Button("Save") {
@@ -129,12 +131,31 @@ struct PopoverView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.small)
+                        .disabled(apiKeyText.isEmpty)
+
+                        if hasStoredKey {
+                            Button("Delete") {
+                                deleteAPIKey()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .foregroundColor(.red)
+                        }
                     }
-                    Text("Stored securely in Keychain")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    if let error = keychainError {
+                        Text(error)
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                    } else {
+                        Text(hasStoredKey ? "API key stored in Keychain" : "Will be stored securely in Keychain")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 .padding(.top, 4)
+                .onAppear {
+                    hasStoredKey = KeychainManager.loadAPIKey() != nil
+                }
             }
 
             Divider()
@@ -176,9 +197,24 @@ struct PopoverView: View {
     }
 
     private func saveAPIKey() {
-        // TODO: Save to Keychain
-        // For now, just dismiss
-        showingAPIKeyInput = false
-        apiKeyText = ""
+        guard !apiKeyText.isEmpty else { return }
+        if KeychainManager.save(apiKey: apiKeyText) {
+            hasStoredKey = true
+            keychainError = nil
+            apiKeyText = ""
+            showingAPIKeyInput = false
+        } else {
+            keychainError = "Failed to save key to Keychain"
+        }
+    }
+
+    private func deleteAPIKey() {
+        if KeychainManager.deleteAPIKey() {
+            hasStoredKey = false
+            keychainError = nil
+            apiKeyText = ""
+        } else {
+            keychainError = "Failed to delete key from Keychain"
+        }
     }
 }
