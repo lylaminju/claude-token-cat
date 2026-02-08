@@ -65,7 +65,7 @@ struct PopoverView: View {
                             .foregroundColor(.secondary)
                     }
                 } else {
-                    Text("Resets in \(usageManager.timeRemainingFormatted)")
+                    Text(usageManager.timeRemaining != nil ? "Resets in \(usageManager.timeRemainingFormatted)" : "No active session")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
