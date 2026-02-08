@@ -51,8 +51,13 @@ struct ProfileAccount: Codable {
     let email: String
 }
 
+struct ProfileOrganization: Codable {
+    let organization_type: String?
+}
+
 struct ProfileResponse: Codable {
     let account: ProfileAccount
+    let organization: ProfileOrganization?
 }
 
 // MARK: - API Client

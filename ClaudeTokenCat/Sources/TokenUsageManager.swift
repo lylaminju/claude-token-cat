@@ -22,6 +22,7 @@ final class TokenUsageManager: ObservableObject {
     @Published private(set) var errorMessage: String? = nil
     @Published private(set) var lastUpdated: Date? = nil
     @Published private(set) var accountEmail: String? = nil
+    @Published private(set) var subscriptionType: String? = nil
 
     // Mock-only state
     @Published private(set) var tokensUsed: Int = 0
@@ -102,6 +103,7 @@ final class TokenUsageManager: ObservableObject {
         Task { @MainActor in
             if let profile = try? await UsageAPIClient.fetchProfile(accessToken: accessToken) {
                 self.accountEmail = profile.account.email
+                self.subscriptionType = Self.formatSubscriptionType(profile.organization?.organization_type)
             }
         }
     }
@@ -205,6 +207,17 @@ final class TokenUsageManager: ObservableObject {
     func refresh() {
         guard let token = accessToken else { return }
         fetchUsage(accessToken: token)
+    }
+
+    private static func formatSubscriptionType(_ type: String?) -> String? {
+        switch type {
+        case "claude_free": return "Free"
+        case "claude_pro": return "Pro"
+        case "claude_max": return "Max"
+        case "claude_team": return "Team"
+        case "claude_enterprise": return "Enterprise"
+        default: return nil
+        }
     }
 
     // MARK: - Session Management

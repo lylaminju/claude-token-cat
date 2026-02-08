@@ -8,16 +8,41 @@ struct PopoverView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
-            HStack {
-                Text("Claude Token Cat")
-                    .font(.headline)
-                Spacer()
-                if let email = usageManager.accountEmail {
-                    Text(email)
-                        .font(.caption)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text("Claude Token Cat")
+                        .font(.headline)
+                    Spacer()
+                    Link(destination: URL(string: "https://claude.ai/settings/usage")!) {
+                        HStack(spacing: 2) {
+                            Text("Account")
+                                .font(.caption)
+                            Image(systemName: "arrow.up.right.square")
+                                .font(.caption2)
+                        }
                         .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    }
+                }
+                HStack(spacing: 4) {
+                    if let sub = usageManager.subscriptionType {
+                        Text(sub)
+                            .font(.system(size: 9))
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(
+                                Capsule()
+                                    .fill(Color.accentColor.opacity(0.15))
+                            )
+                            .foregroundColor(.accentColor)
+                    }
+                    if let email = usageManager.accountEmail {
+                        Text(email)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
                 }
             }
 
