@@ -59,9 +59,18 @@ final class TokenUsageManager: ObservableObject {
 
     private let pollInterval: TimeInterval = 5 * 60  // 5 minutes
 
+    private static let iso8601Formatter = ISO8601DateFormatter()
+    private static let flexibleISO8601Formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ"
+        return formatter
+    }()
+
     // MARK: - Timers
 
     private var pollTimer: Timer?
+    private var fetchTask: Task<Void, Never>?
 
     // MARK: - Init
 
@@ -92,7 +101,8 @@ final class TokenUsageManager: ObservableObject {
     }
 
     private func fetchUsage(accessToken: String) {
-        Task { @MainActor in
+        fetchTask?.cancel()
+        fetchTask = Task { @MainActor in
             do {
                 let response = try await UsageAPIClient.fetchUsage(accessToken: accessToken)
                 self.errorMessage = nil
@@ -102,8 +112,8 @@ final class TokenUsageManager: ObservableObject {
                     self.isSessionActive = fiveHour.utilization > 0
 
                     if let resetStr = fiveHour.resets_at {
-                        self.sessionResetDate = ISO8601DateFormatter().date(from: resetStr)
-                            ?? Self.parseFlexibleISO8601(resetStr)
+                        self.sessionResetDate = Self.iso8601Formatter.date(from: resetStr)
+                            ?? Self.flexibleISO8601Formatter.date(from: resetStr)
                     } else {
                         self.sessionResetDate = nil
                     }
@@ -114,21 +124,19 @@ final class TokenUsageManager: ObservableObject {
                 }
 
                 self.lastUpdated = Date()
+            } catch UsageAPIError.unauthorized {
+                // Token may have been refreshed by Claude Code - retry with fresh credentials
+                if let freshToken = ClaudeCodeCredentials.loadAccessToken(), freshToken != accessToken {
+                    self.startPolling(accessToken: freshToken)
+                } else {
+                    self.errorMessage = UsageAPIError.unauthorized.errorDescription
+                }
             } catch let error as UsageAPIError {
                 self.errorMessage = error.errorDescription
             } catch {
                 self.errorMessage = error.localizedDescription
             }
         }
-    }
-
-    /// Parses ISO 8601 strings with fractional seconds and timezone offsets
-    /// that the strict ISO8601DateFormatter may reject.
-    private static func parseFlexibleISO8601(_ string: String) -> Date? {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ"
-        return formatter.date(from: string)
     }
 
     // MARK: - Mock Data

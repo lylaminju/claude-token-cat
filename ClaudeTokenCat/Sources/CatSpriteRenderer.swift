@@ -22,22 +22,28 @@ final class CatSpriteRenderer {
     static let spriteHeight = 18
     static let scale: CGFloat = 2.0  // @2x for retina
 
+    /// Cached rendered frames per state, built once on first access.
+    private static var frameCache: [CatState: [NSImage]] = [:]
+
     /// Returns animation frames for a given cat state.
     static func frames(for state: CatState) -> [NSImage] {
-        let grids: [[SpriteGrid]]
+        if let cached = frameCache[state] {
+            return cached
+        }
+        let grids: [SpriteGrid]
         switch state {
         case .idle:
-            grids = [idleFrames]
-        case .running:
-            grids = [walkingFrames]  // Same frames as walking, just faster timer
-        case .walking:
-            grids = [walkingFrames]
+            grids = idleFrames
+        case .running, .walking:
+            grids = walkingFrames  // Same frames, different timer speed
         case .tired:
-            grids = [tiredFrames]
+            grids = tiredFrames
         case .sleeping:
-            grids = [sleepingFrames]
+            grids = sleepingFrames
         }
-        return grids[0].map { renderSprite($0) }
+        let rendered = grids.map { renderSprite($0) }
+        frameCache[state] = rendered
+        return rendered
     }
 
     // MARK: - Rendering
