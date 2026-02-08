@@ -12,15 +12,13 @@ struct PopoverView: View {
                 Text("Claude Token Cat")
                     .font(.headline)
                 Spacer()
-                Text(usageManager.catState.rawValue.capitalized)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(
-                        Capsule()
-                            .fill(stateColor.opacity(0.2))
-                    )
+                if let email = usageManager.accountEmail {
+                    Text(email)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
 
             Divider()

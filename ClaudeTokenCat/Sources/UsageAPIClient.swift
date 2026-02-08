@@ -45,20 +45,34 @@ enum UsageAPIError: Error, LocalizedError {
     }
 }
 
+// MARK: - Profile API Response Model
+
+struct ProfileAccount: Codable {
+    let email: String
+}
+
+struct ProfileResponse: Codable {
+    let account: ProfileAccount
+}
+
 // MARK: - API Client
 
 struct UsageAPIClient {
 
     private static let endpoint = URL(string: "https://api.anthropic.com/api/oauth/usage")!
+    private static let profileEndpoint = URL(string: "https://api.anthropic.com/api/oauth/profile")!
 
-    static func fetchUsage(accessToken: String) async throws -> UsageResponse {
-        var request = URLRequest(url: endpoint)
+    private static func authorizedRequest(url: URL, accessToken: String) -> URLRequest {
+        var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("claude-code/2.1.5", forHTTPHeaderField: "User-Agent")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+        return request
+    }
 
+    private static func performRequest(_ request: URLRequest) async throws -> Data {
         let data: Data
         let response: URLResponse
         do {
@@ -73,7 +87,7 @@ struct UsageAPIClient {
 
         switch httpResponse.statusCode {
         case 200:
-            break
+            return data
         case 401:
             throw UsageAPIError.unauthorized
         case 403:
@@ -81,9 +95,23 @@ struct UsageAPIClient {
         default:
             throw UsageAPIError.unexpectedStatus(httpResponse.statusCode)
         }
+    }
 
+    static func fetchUsage(accessToken: String) async throws -> UsageResponse {
+        let request = authorizedRequest(url: endpoint, accessToken: accessToken)
+        let data = try await performRequest(request)
         do {
             return try JSONDecoder().decode(UsageResponse.self, from: data)
+        } catch {
+            throw UsageAPIError.decodingError(error)
+        }
+    }
+
+    static func fetchProfile(accessToken: String) async throws -> ProfileResponse {
+        let request = authorizedRequest(url: profileEndpoint, accessToken: accessToken)
+        let data = try await performRequest(request)
+        do {
+            return try JSONDecoder().decode(ProfileResponse.self, from: data)
         } catch {
             throw UsageAPIError.decodingError(error)
         }

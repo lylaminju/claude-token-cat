@@ -21,6 +21,7 @@ final class TokenUsageManager: ObservableObject {
     @Published private(set) var isUsingMockData: Bool = true
     @Published private(set) var errorMessage: String? = nil
     @Published private(set) var lastUpdated: Date? = nil
+    @Published private(set) var accountEmail: String? = nil
 
     // Mock-only state
     @Published private(set) var tokensUsed: Int = 0
@@ -81,6 +82,7 @@ final class TokenUsageManager: ObservableObject {
     init() {
         if let token = ClaudeCodeCredentials.loadAccessToken() {
             isUsingMockData = false
+            fetchProfile(accessToken: token)
             startPolling(accessToken: token)
         } else {
             isUsingMockData = true
@@ -90,6 +92,16 @@ final class TokenUsageManager: ObservableObject {
 
     deinit {
         pollTimer?.invalidate()
+    }
+
+    // MARK: - Profile
+
+    private func fetchProfile(accessToken: String) {
+        Task { @MainActor in
+            if let profile = try? await UsageAPIClient.fetchProfile(accessToken: accessToken) {
+                self.accountEmail = profile.account.email
+            }
+        }
     }
 
     // MARK: - Real API Polling
@@ -138,6 +150,7 @@ final class TokenUsageManager: ObservableObject {
             } catch UsageAPIError.unauthorized {
                 // Token may have been refreshed by Claude Code - retry with fresh credentials
                 if let freshToken = ClaudeCodeCredentials.loadAccessToken(), freshToken != accessToken {
+                    self.fetchProfile(accessToken: freshToken)
                     self.startPolling(accessToken: freshToken)
                 } else {
                     self.errorMessage = UsageAPIError.unauthorized.errorDescription
