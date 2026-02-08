@@ -63,6 +63,7 @@ final class TokenUsageManager: ObservableObject {
     // MARK: - Configuration
 
     private let pollInterval: TimeInterval = 5 * 60  // 5 minutes
+    private var accessToken: String?
 
     private static let iso8601Formatter = ISO8601DateFormatter()
     private static let flexibleISO8601Formatter: DateFormatter = {
@@ -82,6 +83,7 @@ final class TokenUsageManager: ObservableObject {
     init() {
         if let token = ClaudeCodeCredentials.loadAccessToken() {
             isUsingMockData = false
+            accessToken = token
             fetchProfile(accessToken: token)
             startPolling(accessToken: token)
         } else {
@@ -150,6 +152,7 @@ final class TokenUsageManager: ObservableObject {
             } catch UsageAPIError.unauthorized {
                 // Token may have been refreshed by Claude Code - retry with fresh credentials
                 if let freshToken = ClaudeCodeCredentials.loadAccessToken(), freshToken != accessToken {
+                    self.accessToken = freshToken
                     self.fetchProfile(accessToken: freshToken)
                     self.startPolling(accessToken: freshToken)
                 } else {
@@ -195,6 +198,13 @@ final class TokenUsageManager: ObservableObject {
                 sessionResetDate = Date().addingTimeInterval(3 * 60 * 60)
             }
         }
+    }
+
+    // MARK: - Manual Refresh
+
+    func refresh() {
+        guard let token = accessToken else { return }
+        fetchUsage(accessToken: token)
     }
 
     // MARK: - Session Management

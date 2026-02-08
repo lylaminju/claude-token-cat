@@ -166,8 +166,8 @@ struct PopoverView: View {
                     Text("Connected")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    Spacer()
                     if let updated = usageManager.lastUpdated {
-                        Spacer()
                         Text("Updated at")
                             .font(.caption2)
                             .foregroundColor(.secondary)
@@ -175,6 +175,15 @@ struct PopoverView: View {
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
+                    Button(action: {
+                        usageManager.refresh()
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption2)
+                            .offset(y: -0.5)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.secondary)
                 }
             }
 
