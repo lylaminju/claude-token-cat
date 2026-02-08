@@ -12,6 +12,10 @@ final class TokenUsageManager: ObservableObject {
 
     @Published private(set) var usagePercent: Double = 0
     @Published private(set) var weeklyUsagePercent: Double = 0
+    @Published private(set) var extraUsageEnabled: Bool = false
+    @Published private(set) var extraUsagePercent: Double = 0
+    @Published private(set) var extraUsageUsed: Double = 0
+    @Published private(set) var extraUsageLimit: Int = 0
     @Published private(set) var sessionResetDate: Date? = nil
     @Published private(set) var isSessionActive: Bool = false
     @Published private(set) var isUsingMockData: Bool = true
@@ -46,13 +50,13 @@ final class TokenUsageManager: ObservableObject {
         return max(remaining, 0)
     }
 
-    /// Formatted time remaining string
+    /// Formatted time remaining string (e.g. "2h 50m")
     var timeRemainingFormatted: String {
-        guard let remaining = timeRemaining else { return "No active session" }
-        if remaining <= 0 { return "Session reset" }
+        guard let remaining = timeRemaining else { return "no active session" }
+        if remaining <= 0 { return "now" }
         let hours = Int(remaining) / 3600
         let minutes = (Int(remaining) % 3600) / 60
-        return "\(hours)h \(minutes)m remaining"
+        return "\(hours)h \(minutes)m"
     }
 
     // MARK: - Configuration
@@ -123,6 +127,13 @@ final class TokenUsageManager: ObservableObject {
                     self.weeklyUsagePercent = sevenDay.utilization
                 }
 
+                if let extra = response.extra_usage {
+                    self.extraUsageEnabled = extra.is_enabled
+                    self.extraUsagePercent = extra.utilization
+                    self.extraUsageUsed = extra.used_credits
+                    self.extraUsageLimit = extra.monthly_limit
+                }
+
                 self.lastUpdated = Date()
             } catch UsageAPIError.unauthorized {
                 // Token may have been refreshed by Claude Code - retry with fresh credentials
@@ -178,6 +189,10 @@ final class TokenUsageManager: ObservableObject {
     func resetSession() {
         usagePercent = 0
         weeklyUsagePercent = 0
+        extraUsageEnabled = false
+        extraUsagePercent = 0
+        extraUsageUsed = 0
+        extraUsageLimit = 0
         tokensUsed = 0
         sessionResetDate = nil
         isSessionActive = false

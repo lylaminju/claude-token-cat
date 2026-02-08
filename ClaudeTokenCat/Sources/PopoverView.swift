@@ -67,7 +67,7 @@ struct PopoverView: View {
                             .foregroundColor(.secondary)
                     }
                 } else {
-                    Text("\(Int(usageManager.usagePercent))% of 5-hour limit used")
+                    Text("Resets in \(usageManager.timeRemainingFormatted)")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -102,16 +102,32 @@ struct PopoverView: View {
                 }
             }
 
-            Divider()
+            // Extra usage (real data only)
+            if !usageManager.isUsingMockData && usageManager.extraUsageEnabled {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Extra Usage")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("$\(String(format: "%.2f", usageManager.extraUsageUsed / 100.0)) / $\(usageManager.extraUsageLimit / 100)")
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundColor(.secondary)
+                    }
 
-            // Session info
-            HStack {
-                Image(systemName: "clock")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-                Text(usageManager.timeRemainingFormatted)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(height: 4)
+
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.blue.opacity(0.6))
+                                .frame(width: geo.size.width * min(usageManager.extraUsagePercent / 100.0, 1.0), height: 4)
+                        }
+                    }
+                    .frame(height: 4)
+                }
             }
 
             // Error message

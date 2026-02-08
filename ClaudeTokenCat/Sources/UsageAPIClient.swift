@@ -7,10 +7,17 @@ struct UsageBucket: Codable {
     let resets_at: String?
 }
 
+struct ExtraUsageBucket: Codable {
+    let is_enabled: Bool
+    let monthly_limit: Int
+    let used_credits: Double
+    let utilization: Double
+}
+
 struct UsageResponse: Codable {
     let five_hour: UsageBucket?
     let seven_day: UsageBucket?
-    let seven_day_opus: UsageBucket?
+    let extra_usage: ExtraUsageBucket?
 }
 
 // MARK: - API Errors
