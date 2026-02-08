@@ -129,8 +129,8 @@ struct PopoverView: View {
             Divider()
 
             // Connection status / actions
-            HStack(spacing: 8) {
-                if usageManager.isUsingMockData {
+            if usageManager.isUsingMockData {
+                HStack(spacing: 8) {
                     Button(action: {
                         usageManager.cycleMockUsage()
                     }) {
@@ -142,18 +142,26 @@ struct PopoverView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                } else {
-                    HStack(spacing: 4) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                            .font(.caption)
-                        Text("Connected via Claude Code")
-                            .font(.caption)
+                    Spacer()
+                }
+            } else {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.caption)
+                    Text("Connected")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    if let updated = usageManager.lastUpdated {
+                        Spacer()
+                        Text("Updated at")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(updated, format: .dateTime.hour().minute())
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 }
-
-                Spacer()
             }
 
             if usageManager.isUsingMockData {

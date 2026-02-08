@@ -16,6 +16,7 @@ final class TokenUsageManager: ObservableObject {
     @Published private(set) var isSessionActive: Bool = false
     @Published private(set) var isUsingMockData: Bool = true
     @Published private(set) var errorMessage: String? = nil
+    @Published private(set) var lastUpdated: Date? = nil
 
     // Mock-only state
     @Published private(set) var tokensUsed: Int = 0
@@ -111,6 +112,8 @@ final class TokenUsageManager: ObservableObject {
                 if let sevenDay = response.seven_day {
                     self.weeklyUsagePercent = sevenDay.utilization
                 }
+
+                self.lastUpdated = Date()
             } catch let error as UsageAPIError {
                 self.errorMessage = error.errorDescription
             } catch {
