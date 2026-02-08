@@ -13,6 +13,8 @@
 		AA000004 /* TokenUsageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100004; };
 		AA000005 /* PopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100005; };
 		AA000006 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100006; };
+		AA000007 /* ClaudeCodeCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100009; };
+		AA000008 /* UsageAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10000A; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +26,8 @@
 		AA100006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA100007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA100008 /* ClaudeTokenCat.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeTokenCat.entitlements; sourceTree = "<group>"; };
+		AA100009 /* ClaudeCodeCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCodeCredentials.swift; sourceTree = "<group>"; };
+		AA10000A /* UsageAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageAPIClient.swift; sourceTree = "<group>"; };
 		AA200000 /* ClaudeTokenCat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeTokenCat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -73,6 +77,8 @@
 				AA100003 /* CatSpriteRenderer.swift */,
 				AA100004 /* TokenUsageManager.swift */,
 				AA100005 /* PopoverView.swift */,
+				AA100009 /* ClaudeCodeCredentials.swift */,
+				AA10000A /* UsageAPIClient.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -151,6 +157,8 @@
 				AA000003 /* CatSpriteRenderer.swift in Sources */,
 				AA000004 /* TokenUsageManager.swift in Sources */,
 				AA000005 /* PopoverView.swift in Sources */,
+				AA000007 /* ClaudeCodeCredentials.swift in Sources */,
+				AA000008 /* UsageAPIClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

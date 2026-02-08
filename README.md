@@ -108,3 +108,20 @@ Requires **macOS 13+** and Xcode command line tools.
 ## Status
 
 Prototype — currently uses mock data. The popover includes a debug "Cycle State" button to preview all cat animations. Real Claude API polling is stubbed in `TokenUsageManager.fetchUsage()`.
+
+## API & Usage Data
+
+This app uses the **undocumented** `GET https://api.anthropic.com/api/oauth/usage` endpoint to fetch Claude Pro/Max session usage data (5-hour utilization %, weekly limits, reset times). This is the same internal endpoint that Anthropic's own [Claude Code CLI](https://www.npmjs.com/package/@anthropic-ai/claude-code) uses to power its `/usage` command.
+
+OAuth credentials are read from Claude Code's stored authentication (macOS Keychain or `~/.claude/.credentials.json`). The user must have Claude Code installed and logged in via `claude login`.
+
+> **Caveat:** This endpoint is not part of the public Anthropic API. It is an undocumented, internal API used by Anthropic's Claude Code CLI. It could change or break without notice. There is currently no official public API for querying personal Claude Pro/Max subscription usage quotas.
+
+## References
+
+- [Claude Code CLI (npm)](https://www.npmjs.com/package/@anthropic-ai/claude-code) — the origin of the OAuth usage endpoint (defined in the bundled `cli.js`)
+- [Claude Code GitHub — Issue #13334](https://github.com/anthropics/claude-code/issues/13334) — confirms `user:profile` OAuth scope is required for usage data
+- [codelynx.dev — Claude Code Usage Limits in Statusline](https://codelynx.dev/posts/claude-code-usage-limits-statusline) — documents how the endpoint was discovered via network interception
+- [Anthropic API Rate Limits (official)](https://docs.anthropic.com/en/api/rate-limits) — official rate limit documentation (different from the usage endpoint above)
+- [Claude-Usage-Tracker](https://github.com/hamed-elfayome/Claude-Usage-Tracker) — community macOS app using the same endpoint
+- [ClaudeBar](https://github.com/tddworks/ClaudeBar) — community macOS app using the same endpoint

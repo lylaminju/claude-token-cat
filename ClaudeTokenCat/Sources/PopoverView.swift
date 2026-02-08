@@ -4,10 +4,6 @@ import SwiftUI
 
 struct PopoverView: View {
     @ObservedObject var usageManager: TokenUsageManager
-    @State private var showingAPIKeyInput = false
-    @State private var apiKeyText = ""
-    @State private var hasStoredKey = false
-    @State private var keychainError: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -29,14 +25,14 @@ struct PopoverView: View {
 
             Divider()
 
-            // Usage bar
+            // Session usage
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Token Usage")
+                    Text("Session Usage")
                         .font(.subheadline)
                         .fontWeight(.medium)
                     Spacer()
-                    Text("\(usageManager.usagePercent)%")
+                    Text("\(Int(usageManager.usagePercent))%")
                         .font(.subheadline)
                         .fontWeight(.bold)
                         .foregroundColor(stateColor)
@@ -56,18 +52,53 @@ struct PopoverView: View {
                 }
                 .frame(height: 8)
 
-                // Token count
-                HStack {
-                    Text(formatTokenCount(usageManager.tokensUsed))
-                        .font(.system(.caption, design: .monospaced))
-                    Text("/")
+                // Detail line
+                if usageManager.isUsingMockData {
+                    HStack {
+                        Text(formatTokenCount(usageManager.tokensUsed))
+                            .font(.system(.caption, design: .monospaced))
+                        Text("/")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(formatTokenCount(usageManager.tokenLimit))
+                            .font(.system(.caption, design: .monospaced))
+                        Text("tokens")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    Text("\(Int(usageManager.usagePercent))% of 5-hour limit used")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text(formatTokenCount(usageManager.tokenLimit))
-                        .font(.system(.caption, design: .monospaced))
-                    Text("tokens")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                }
+            }
+
+            // Weekly usage (real data only)
+            if !usageManager.isUsingMockData && usageManager.weeklyUsagePercent > 0 {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Weekly Usage")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(Int(usageManager.weeklyUsagePercent))%")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
+
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.gray.opacity(0.15))
+                                .frame(height: 4)
+
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.secondary.opacity(0.5))
+                                .frame(width: geo.size.width * min(usageManager.weeklyUsagePercent / 100.0, 1.0), height: 4)
+                        }
+                    }
+                    .frame(height: 4)
                 }
             }
 
@@ -83,78 +114,56 @@ struct PopoverView: View {
                     .foregroundColor(.secondary)
             }
 
-            Divider()
-
-            // Actions
-            HStack(spacing: 8) {
-                // Debug: cycle through states
-                Button(action: {
-                    usageManager.cycleMockUsage()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                        Text("Cycle State")
-                    }
-                    .font(.caption)
+            // Error message
+            if let error = usageManager.errorMessage {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.caption)
+                    Text(error)
+                        .font(.caption2)
+                        .foregroundColor(.orange)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-
-                Spacer()
-
-                // Settings
-                Button(action: {
-                    showingAPIKeyInput.toggle()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "gearshape")
-                        Text("Settings")
-                    }
-                    .font(.caption)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
             }
 
-            // API Key input (expandable)
-            if showingAPIKeyInput {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Anthropic API Key")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                    HStack {
-                        SecureField(hasStoredKey ? "••••••••" : "sk-ant-...", text: $apiKeyText)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(.caption, design: .monospaced))
-                        Button("Save") {
-                            saveAPIKey()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                        .disabled(apiKeyText.isEmpty)
+            Divider()
 
-                        if hasStoredKey {
-                            Button("Delete") {
-                                deleteAPIKey()
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .foregroundColor(.red)
+            // Connection status / actions
+            HStack(spacing: 8) {
+                if usageManager.isUsingMockData {
+                    Button(action: {
+                        usageManager.cycleMockUsage()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("Cycle State")
                         }
+                        .font(.caption)
                     }
-                    if let error = keychainError {
-                        Text(error)
-                            .font(.caption2)
-                            .foregroundColor(.red)
-                    } else {
-                        Text(hasStoredKey ? "API key stored in Keychain" : "Will be stored securely in Keychain")
-                            .font(.caption2)
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                        Text("Connected via Claude Code")
+                            .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
-                .padding(.top, 4)
-                .onAppear {
-                    hasStoredKey = KeychainManager.loadAPIKey() != nil
+
+                Spacer()
+            }
+
+            if usageManager.isUsingMockData {
+                HStack(spacing: 4) {
+                    Image(systemName: "info.circle")
+                        .foregroundColor(.secondary)
+                        .font(.caption2)
+                    Text("Run `claude login` to connect")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
             }
 
@@ -194,27 +203,5 @@ struct PopoverView: View {
             return String(format: "%.1fk", Double(count) / 1000.0)
         }
         return "\(count)"
-    }
-
-    private func saveAPIKey() {
-        guard !apiKeyText.isEmpty else { return }
-        if KeychainManager.save(apiKey: apiKeyText) {
-            hasStoredKey = true
-            keychainError = nil
-            apiKeyText = ""
-            showingAPIKeyInput = false
-        } else {
-            keychainError = "Failed to save key to Keychain"
-        }
-    }
-
-    private func deleteAPIKey() {
-        if KeychainManager.deleteAPIKey() {
-            hasStoredKey = false
-            keychainError = nil
-            apiKeyText = ""
-        } else {
-            keychainError = "Failed to delete key from Keychain"
-        }
     }
 }

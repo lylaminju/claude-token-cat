@@ -4,31 +4,33 @@ import Combine
 // MARK: - Token Usage Manager
 
 /// Tracks Claude API token usage within a 5-hour session window.
-/// Currently uses mock data; will be replaced with real API polling later.
+/// Uses real API data from Claude Code's OAuth credentials when available,
+/// falls back to mock data otherwise.
 final class TokenUsageManager: ObservableObject {
 
     // MARK: - Published State
 
+    @Published private(set) var usagePercent: Double = 0
+    @Published private(set) var weeklyUsagePercent: Double = 0
+    @Published private(set) var sessionResetDate: Date? = nil
+    @Published private(set) var isSessionActive: Bool = false
+    @Published private(set) var isUsingMockData: Bool = true
+    @Published private(set) var errorMessage: String? = nil
+
+    // Mock-only state
     @Published private(set) var tokensUsed: Int = 0
     @Published private(set) var tokenLimit: Int = 300_000
-    @Published private(set) var sessionStartDate: Date? = nil
-    @Published private(set) var isSessionActive: Bool = false
 
-    /// Usage as 0.0–1.0
+    /// Usage as 0.0–1.0 for the progress bar
     var usageRatio: Double {
-        guard tokenLimit > 0 else { return 0 }
-        return min(Double(tokensUsed) / Double(tokenLimit), 1.0)
-    }
-
-    /// Usage as percentage 0–100
-    var usagePercent: Int {
-        Int(usageRatio * 100)
+        min(usagePercent / 100.0, 1.0)
     }
 
     /// Current cat state based on usage
     var catState: CatState {
         guard isSessionActive else { return .idle }
-        switch usagePercent {
+        let pct = Int(usagePercent)
+        switch pct {
         case 0..<40:    return .running
         case 40..<80:   return .walking
         case 80..<100:  return .tired
@@ -36,11 +38,10 @@ final class TokenUsageManager: ObservableObject {
         }
     }
 
-    /// Time remaining in current session, nil if no session
+    /// Time remaining in current session
     var timeRemaining: TimeInterval? {
-        guard let start = sessionStartDate else { return nil }
-        let elapsed = Date().timeIntervalSince(start)
-        let remaining = sessionDuration - elapsed
+        guard let reset = sessionResetDate else { return nil }
+        let remaining = reset.timeIntervalSinceNow
         return max(remaining, 0)
     }
 
@@ -55,97 +56,120 @@ final class TokenUsageManager: ObservableObject {
 
     // MARK: - Configuration
 
-    static let sessionDuration: TimeInterval = 5 * 60 * 60  // 5 hours
-    private let sessionDuration = TokenUsageManager.sessionDuration
     private let pollInterval: TimeInterval = 5 * 60  // 5 minutes
 
     // MARK: - Timers
 
     private var pollTimer: Timer?
-    private var sessionResetTimer: Timer?
 
     // MARK: - Init
 
     init() {
-        // Start with mock data for prototype
-        startMockSession()
+        if let token = ClaudeCodeCredentials.loadAccessToken() {
+            isUsingMockData = false
+            startPolling(accessToken: token)
+        } else {
+            isUsingMockData = true
+            startMockSession()
+        }
     }
 
     deinit {
         pollTimer?.invalidate()
-        sessionResetTimer?.invalidate()
+    }
+
+    // MARK: - Real API Polling
+
+    private func startPolling(accessToken: String) {
+        // Fetch immediately
+        fetchUsage(accessToken: accessToken)
+
+        pollTimer?.invalidate()
+        pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
+            self?.fetchUsage(accessToken: accessToken)
+        }
+    }
+
+    private func fetchUsage(accessToken: String) {
+        Task { @MainActor in
+            do {
+                let response = try await UsageAPIClient.fetchUsage(accessToken: accessToken)
+                self.errorMessage = nil
+
+                if let fiveHour = response.five_hour {
+                    self.usagePercent = fiveHour.utilization
+                    self.isSessionActive = fiveHour.utilization > 0
+
+                    if let resetStr = fiveHour.resets_at {
+                        self.sessionResetDate = ISO8601DateFormatter().date(from: resetStr)
+                            ?? Self.parseFlexibleISO8601(resetStr)
+                    } else {
+                        self.sessionResetDate = nil
+                    }
+                }
+
+                if let sevenDay = response.seven_day {
+                    self.weeklyUsagePercent = sevenDay.utilization
+                }
+            } catch let error as UsageAPIError {
+                self.errorMessage = error.errorDescription
+            } catch {
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    /// Parses ISO 8601 strings with fractional seconds and timezone offsets
+    /// that the strict ISO8601DateFormatter may reject.
+    private static func parseFlexibleISO8601(_ string: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ"
+        return formatter.date(from: string)
     }
 
     // MARK: - Mock Data
 
-    /// Starts a mock session with simulated usage for testing.
     func startMockSession() {
-        sessionStartDate = Date().addingTimeInterval(-2 * 60 * 60)  // 2 hours ago
+        isUsingMockData = true
         isSessionActive = true
-        tokensUsed = 135_000    // ~45% of 300k
+        tokensUsed = 135_000
         tokenLimit = 300_000
-
-        scheduleSessionReset()
+        usagePercent = Double(tokensUsed) / Double(tokenLimit) * 100.0
+        sessionResetDate = Date().addingTimeInterval(3 * 60 * 60)  // 3 hours from now
     }
 
-    /// Cycle through different usage levels for testing animations.
     func cycleMockUsage() {
-        let levels = [0, 30, 45, 65, 85, 95, 100]
+        guard isUsingMockData else { return }
+
+        let levels: [Double] = [0, 30, 45, 65, 85, 95, 100]
         let currentIndex = levels.firstIndex(where: { $0 >= usagePercent }) ?? 0
         let nextIndex = (currentIndex + 1) % levels.count
         let nextPercent = levels[nextIndex]
 
         if nextPercent == 0 {
             isSessionActive = false
+            usagePercent = 0
             tokensUsed = 0
-            sessionStartDate = nil
+            sessionResetDate = nil
         } else {
             isSessionActive = true
-            if sessionStartDate == nil {
-                sessionStartDate = Date().addingTimeInterval(-2 * 60 * 60)
+            usagePercent = nextPercent
+            tokensUsed = Int(Double(tokenLimit) * nextPercent / 100.0)
+            if sessionResetDate == nil {
+                sessionResetDate = Date().addingTimeInterval(3 * 60 * 60)
             }
-            tokensUsed = Int(Double(tokenLimit) * Double(nextPercent) / 100.0)
         }
     }
 
     // MARK: - Session Management
 
     func resetSession() {
+        usagePercent = 0
+        weeklyUsagePercent = 0
         tokensUsed = 0
-        sessionStartDate = nil
+        sessionResetDate = nil
         isSessionActive = false
         pollTimer?.invalidate()
-        sessionResetTimer?.invalidate()
-    }
-
-    private func scheduleSessionReset() {
-        guard let remaining = timeRemaining, remaining > 0 else { return }
-        sessionResetTimer?.invalidate()
-        sessionResetTimer = Timer.scheduledTimer(withTimeInterval: remaining, repeats: false) { [weak self] _ in
-            self?.resetSession()
-        }
-    }
-
-    // MARK: - API Key
-
-    var hasAPIKey: Bool {
-        KeychainManager.loadAPIKey() != nil
-    }
-
-    // MARK: - API Polling (placeholder)
-
-    func startPolling() {
-        guard let _ = KeychainManager.loadAPIKey() else { return }
-        pollTimer?.invalidate()
-        pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-            self?.fetchUsage()
-        }
-    }
-
-    private func fetchUsage() {
-        // TODO: Replace with real Claude API call
-        // For now, slowly increment mock usage
-        let increment = Int.random(in: 500...2000)
-        tokensUsed = min(tokensUsed + increment, tokenLimit)
     }
 }

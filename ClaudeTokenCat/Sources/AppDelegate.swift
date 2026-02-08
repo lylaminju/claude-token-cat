@@ -64,7 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func observeUsageChanges() {
         // Watch for state changes from the usage manager
-        usageManager.$tokensUsed
+        usageManager.$usagePercent
             .combineLatest(usageManager.$isSessionActive)
             .receive(on: RunLoop.main)
             .sink { [weak self] _, _ in
