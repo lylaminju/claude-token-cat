@@ -9,9 +9,9 @@ struct UsageBucket: Codable {
 
 struct ExtraUsageBucket: Codable {
     let is_enabled: Bool
-    let monthly_limit: Int
-    let used_credits: Double
-    let utilization: Double
+    let monthly_limit: Int?
+    let used_credits: Double?
+    let utilization: Double?
 }
 
 struct UsageResponse: Codable {

@@ -129,9 +129,9 @@ final class TokenUsageManager: ObservableObject {
 
                 if let extra = response.extra_usage {
                     self.extraUsageEnabled = extra.is_enabled
-                    self.extraUsagePercent = extra.utilization
-                    self.extraUsageUsed = extra.used_credits
-                    self.extraUsageLimit = extra.monthly_limit
+                    self.extraUsagePercent = extra.utilization ?? 0
+                    self.extraUsageUsed = extra.used_credits ?? 0
+                    self.extraUsageLimit = extra.monthly_limit ?? 0
                 }
 
                 self.lastUpdated = Date()
