@@ -250,7 +250,7 @@ struct PopoverView: View {
         case .jumping:  return .green
         case .walking:  return .yellow
         case .tired:    return .orange
-        case .sleeping: return .red
+        case .sleeping: return Color(red: 0.85, green: 0.35, blue: 0.45)
         }
     }
 
