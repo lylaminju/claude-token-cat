@@ -1,52 +1,72 @@
 # Claude Token Cat
 
-A macOS menu bar app that tracks your Claude API token usage with an animated pixel art cat. The cat's behavior changes as you consume more tokens in a session.
+A macOS menu bar app that tracks your Claude Pro/Max session usage with an animated pixel art cat. The cat's behavior changes based on your 5-hour utilization window.
 
-```
-    /\_/\          ╭──────────────────────────╮
-   ( o.o )  ←───  │ Claude Token Cat      45% │
-    > ^ <         │ ████████████░░░░░░░░░  ▏ │
-   /|   |\        │ 135.0k / 300.0k tokens   │
-                  │ 🕐 2h 58m remaining       │
-                  ╰──────────────────────────╯
-```
+<img src="assets/capture-sleeping.png" alt="Claude Token Cat popover" width="320">
 
 ## Cat States
 
-The cat animates in the menu bar based on your token usage:
+The cat animates in the menu bar based on your session usage:
 
 ```
-  Usage         State       Animation            Speed
- ─────────────────────────────────────────────────────
-  No session    idle        Sitting, tail wag     0.6s
-  0 – 39%       running     Energetic sprint      0.15s
-  40 – 79%      walking     Calm stroll           0.35s
-  80 – 99%      tired       Lying down, yawning   0.8s
-  100%          sleeping    Curled up, ZZZ...      1.2s
+  Usage         State       Animation
+ ──────────────────────────────────────────
+  No session    idle        Sitting, tail wag
+  0 – 39%       jumping     Energetic jump cycle
+  40 – 79%      walking     Calm stroll
+  80 – 99%      tired       Lying down, yawning
+  100%          sleeping    Lying down, zZZ...
 ```
+
+## Getting Started
+
+### Prerequisites
+
+- **macOS 13+** (Ventura or later)
+- Xcode command-line tools:
+  ```bash
+  xcode-select --install
+  ```
+- [Claude Code CLI](https://www.npmjs.com/package/@anthropic-ai/claude-code) (for live usage data):
+  ```bash
+  npm install -g @anthropic-ai/claude-code
+  claude login
+  ```
+
+### Build & Run
+
+```bash
+./build.sh                         # Build with Swift Package Manager
+open build/ClaudeTokenCat.app      # Launch the menu bar app
+pkill -f ClaudeTokenCat            # Stop the app
+```
+
+If you haven't run `claude login`, the app falls back to mock data with a debug "Cycle State" button so you can preview all cat animations.
 
 ## Project Structure
 
 ```
 ClaudeTokenCat/
 │
-├── Package.swift                          # Swift Package Manager config (macOS 13+)
+├── Package.swift                          # Swift Package Manager config
 ├── build.sh                               # Build script → outputs .app bundle
 │
 ├── ClaudeTokenCat/                        # App source & resources
-│   ├── Info.plist                          #   App metadata (LSUIElement = true → no dock icon)
-│   ├── ClaudeTokenCat.entitlements         #   Network client + Keychain access
-│   ├── Assets.xcassets/                    #   Asset catalog (app icon)
+│   ├── Info.plist                         # App metadata (LSUIElement = true → no dock icon)
+│   ├── ClaudeTokenCat.entitlements        # Network client + Keychain access
+│   ├── Assets.xcassets/                   # Asset catalog (app icon)
 │   │
 │   └── Sources/
-│       ├── ClaudeTokenCatApp.swift         #   @main entry point — launches NSApplication
-│       ├── AppDelegate.swift               #   Status bar item, popover, animation loop
-│       ├── TokenUsageManager.swift         #   Token tracking state (mock data for now)
-│       ├── PopoverView.swift               #   SwiftUI popover UI (usage bar, settings)
-│       └── CatSpriteRenderer.swift         #   Pixel art sprite engine + CatState enum
+│       ├── ClaudeTokenCatApp.swift        # @main entry point — launches NSApplication
+│       ├── AppDelegate.swift              # Status bar item, popover, animation loop
+│       ├── TokenUsageManager.swift        # Usage tracking state + API polling
+│       ├── UsageAPIClient.swift           # HTTP client for the usage endpoint
+│       ├── ClaudeCodeCredentials.swift    # Reads OAuth token from Keychain / credentials file
+│       ├── PopoverView.swift              # SwiftUI popover UI (usage bar, settings)
+│       └── CatSpriteRenderer.swift        # Pixel art sprite engine + CatState enum
 │
 ├── build/                                 # Build output
-│   └── ClaudeTokenCat.app/                #   Assembled macOS .app bundle
+│   └── ClaudeTokenCat.app/                # Assembled macOS .app bundle
 │
 └── ClaudeTokenCat.xcodeproj/              # Xcode project (optional, can use SPM)
 ```
@@ -57,57 +77,46 @@ ClaudeTokenCat/
 ┌─────────────────────────────────────────────────────────────┐
 │                      macOS Menu Bar                         │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  NSStatusItem  ←──  animated NSImage (pixel cat)     │   │
+│  │  Menu bar icon  ←──  animated image (pixel cat)      │   │
 │  └────────────┬─────────────────────────────────────────┘   │
 │               │ click                                       │
 │  ┌────────────▼─────────────────────────────────────────┐   │
-│  │  NSPopover  →  PopoverView (SwiftUI)                 │   │
+│  │  Floating panel  →  PopoverView (SwiftUI)            │   │
 │  │  ┌───────────────────────────────────────────────┐   │   │
-│  │  │  Token usage bar  ·  Session timer            │   │   │
-│  │  │  Cycle State (debug)  ·  Settings / API key   │   │   │
+│  │  │  Session % bar  ·  Reset timer  ·  Weekly %   │   │   │
+│  │  │  Subscription badge  ·  Account link          │   │   │
 │  │  └───────────────────────────────────────────────┘   │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 
-┌─────────────────────┐       publishes        ┌──────────────────────┐
-│  TokenUsageManager  │ ────────────────────▶   │     AppDelegate      │
-│  (ObservableObject) │   @Published state      │                      │
-│                     │                         │  observes changes →  │
-│  · tokensUsed       │                         │  switches CatState → │
-│  · tokenLimit       │   ◀──── Combine ────    │  restarts animation  │
-│  · sessionStartDate │                         │                      │
-│  · isSessionActive  │                         └──────────┬───────────┘
+                                                   ClaudeCodeCredentials
+                                                   ┌──────────────────────┐
+                                                   │ macOS Keychain or    │
+                                                   │ ~/.claude/.creds     │
+                                                   │ → OAuth access token │
+                                                   └──────────┬───────────┘
+                                                              │
+┌─────────────────────┐       publishes         ┌─────────────▼────────────┐
+│  TokenUsageManager  │ ────────────────────▶   │     AppDelegate          │
+│  (ObservableObject) │   @Published state      │                          │
+│                     │                         │  observes changes →      │
+│  · usagePercent     │                         │  switches CatState →     │
+│  · weeklyUsagePercent   ◀──── Combine ────    │  restarts animation      │
+│  · sessionResetDate │                         │                          │
+│  · isSessionActive  │                         └──────────┬───────────────┘
 │  · catState         │                                    │
 │  · usageRatio       │                                    │ frames(for:)
-└─────────────────────┘                                    ▼
-                                                ┌──────────────────────┐
-                                                │  CatSpriteRenderer   │
-                                                │                      │
-                                                │  28×18 pixel grids → │
-                                                │  NSImage (template)  │
-                                                │                      │
-                                                │  States:             │
-                                                │   idle     (3 frames)│
-                                                │   running  (3 frames)│
-                                                │   walking  (3 frames)│
-                                                │   tired    (2 frames)│
-                                                │   sleeping (2 frames)│
-                                                └──────────────────────┘
+└────────┬────────────┘                                    ▼
+         │ fetches via              ┌─────────────────────────────────────┐
+         ▼                          │          CatSpriteRenderer          │
+┌─────────────────────┐             │                                     │
+│  UsageAPIClient     │             │ 28×18 pixel grids → image           │
+│                     │             │ (template for light/dark)           │
+│  GET /api/oauth/    │             │                                     │
+│      usage          │             │ 5 animated states:                  │
+│  GET /api/me        │             │ idle/jumping/walking/tired/sleeping │
+└─────────────────────┘             └─────────────────────────────────────┘
 ```
-
-## Build & Run
-
-```bash
-./build.sh                         # Build with Swift Package Manager
-open build/ClaudeTokenCat.app      # Launch the menu bar app
-pkill -f ClaudeTokenCat            # Stop the app
-```
-
-Requires **macOS 13+** and Xcode command line tools.
-
-## Status
-
-Prototype — currently uses mock data. The popover includes a debug "Cycle State" button to preview all cat animations. Real Claude API polling is stubbed in `TokenUsageManager.fetchUsage()`.
 
 ## API & Usage Data
 
@@ -120,8 +129,6 @@ OAuth credentials are read from Claude Code's stored authentication (macOS Keych
 ## References
 
 - [Claude Code CLI (npm)](https://www.npmjs.com/package/@anthropic-ai/claude-code) — the origin of the OAuth usage endpoint (defined in the bundled `cli.js`)
-- [Claude Code GitHub — Issue #13334](https://github.com/anthropics/claude-code/issues/13334) — confirms `user:profile` OAuth scope is required for usage data
-- [codelynx.dev — Claude Code Usage Limits in Statusline](https://codelynx.dev/posts/claude-code-usage-limits-statusline) — documents how the endpoint was discovered via network interception
+- [Claude Code GitHub - Issue #13334](https://github.com/anthropics/claude-code/issues/13334) — confirms `user:profile` OAuth scope is required for usage data
+- [codelynx.dev - Claude Code Usage Limits in Statusline](https://codelynx.dev/posts/claude-code-usage-limits-statusline) — documents how the endpoint was discovered via network interception
 - [Anthropic API Rate Limits (official)](https://docs.anthropic.com/en/api/rate-limits) — official rate limit documentation (different from the usage endpoint above)
-- [Claude-Usage-Tracker](https://github.com/hamed-elfayome/Claude-Usage-Tracker) — community macOS app using the same endpoint
-- [ClaudeBar](https://github.com/tddworks/ClaudeBar) — community macOS app using the same endpoint
