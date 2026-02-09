@@ -17,6 +17,7 @@ final class TokenUsageManager: ObservableObject {
     @Published private(set) var extraUsageUsed: Double = 0
     @Published private(set) var extraUsageLimit: Int = 0
     @Published private(set) var sessionResetDate: Date? = nil
+    @Published private(set) var weeklyResetDate: Date? = nil
     @Published private(set) var isSessionActive: Bool = false
     @Published private(set) var isUsingMockData: Bool = true
     @Published private(set) var keychainAccessDenied: Bool = false
@@ -60,6 +61,14 @@ final class TokenUsageManager: ObservableObject {
         let hours = Int(remaining) / 3600
         let minutes = (Int(remaining) % 3600) / 60
         return "\(hours)h \(minutes)m"
+    }
+
+    /// Formatted weekly reset time (e.g. "Fri 6:23 PM"), nil when unavailable
+    var weeklyResetFormatted: String? {
+        guard let date = weeklyResetDate else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE h:mm a"
+        return formatter.string(from: date)
     }
 
     // MARK: - Configuration
@@ -147,6 +156,13 @@ final class TokenUsageManager: ObservableObject {
 
                 if let sevenDay = response.seven_day {
                     self.weeklyUsagePercent = sevenDay.utilization
+
+                    if let resetStr = sevenDay.resets_at {
+                        self.weeklyResetDate = Self.iso8601Formatter.date(from: resetStr)
+                            ?? Self.flexibleISO8601Formatter.date(from: resetStr)
+                    } else {
+                        self.weeklyResetDate = nil
+                    }
                 }
 
                 if let extra = response.extra_usage {
@@ -237,6 +253,7 @@ final class TokenUsageManager: ObservableObject {
         extraUsageLimit = 0
         tokensUsed = 0
         sessionResetDate = nil
+        weeklyResetDate = nil
         isSessionActive = false
         pollTimer?.invalidate()
     }
