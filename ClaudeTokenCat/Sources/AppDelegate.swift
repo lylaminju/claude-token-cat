@@ -75,6 +75,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             .store(in: &cancellables)
+
+        // Watch for animation pause toggle
+        usageManager.$animationEnabled
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.switchToState(self.currentState)
+            }
+            .store(in: &cancellables)
     }
 
     private func switchToState(_ state: CatState) {
@@ -87,8 +96,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             statusItem.button?.image = first
         }
 
-        // Restart animation timer with appropriate speed
+        // Restart animation timer (only when not paused)
         animationTimer?.invalidate()
+        animationTimer = nil
+
+        guard usageManager.animationEnabled else { return }
+
         let interval = animationInterval(for: state)
         animationTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.advanceFrame()
