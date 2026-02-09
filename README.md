@@ -96,24 +96,24 @@ ClaudeTokenCat/
 
 ```mermaid
 graph TD
-    Creds["ClaudeCodeCredentials<br>macOS Keychain or ~/.claude/.creds<br>→ OAuth access token"]
+    Creds["<b>[ ClaudeCodeCredentials ]</b><br>macOS Keychain or ~/.claude/.creds<br>→ OAuth access token"]
 
     Creds --> AppDelegate
 
-    TokenUsageManager["TokenUsageManager<br>(ObservableObject)<br>usagePercent · weeklyUsagePercent<br>sessionResetDate · isSessionActive<br>catState · usageRatio"]
+    TokenUsageManager["<b>[ TokenUsageManager ]</b><br>(ObservableObject)<br>usagePercent · weeklyUsagePercent<br>sessionResetDate · isSessionActive<br>catState · usageRatio"]
 
     TokenUsageManager -- "@Published state" --> AppDelegate
     AppDelegate -- "Combine" --> TokenUsageManager
 
-    AppDelegate["AppDelegate<br>observes changes →<br>switches CatState →<br>restarts animation"]
+    AppDelegate["<b>[ AppDelegate ]</b><br>observes changes →<br>switches CatState →<br>restarts animation"]
 
     AppDelegate -- "frames(for:)" --> CatSpriteRenderer
 
     TokenUsageManager -- "fetches via" --> UsageAPIClient
 
-    UsageAPIClient["UsageAPIClient<br>GET /api/oauth/usage<br>GET /api/me"]
+    UsageAPIClient["<b>[ UsageAPIClient ]</b><br>GET /api/oauth/usage<br>GET /api/oauth/profile"]
 
-    CatSpriteRenderer["CatSpriteRenderer<br>28×18 pixel grids → image<br>(template for light/dark)<br>5 animated states:<br>idle / jumping / walking / tired / sleeping"]
+    CatSpriteRenderer["<b>[ CatSpriteRenderer ]</b><br>28×18 pixel grids → image<br>with 5 animated states"]
 ```
 
 ## API & Usage Data
