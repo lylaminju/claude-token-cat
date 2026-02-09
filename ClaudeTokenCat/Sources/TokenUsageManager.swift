@@ -38,7 +38,7 @@ final class TokenUsageManager: ObservableObject {
         guard isSessionActive else { return .idle }
         let pct = Int(usagePercent)
         switch pct {
-        case 0..<40:    return .running
+        case 0..<40:    return .jumping
         case 40..<80:   return .walking
         case 80..<100:  return .tired
         default:        return .sleeping

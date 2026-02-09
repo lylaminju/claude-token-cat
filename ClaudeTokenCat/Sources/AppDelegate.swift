@@ -104,9 +104,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Different states animate at different speeds.
     private func animationInterval(for state: CatState) -> TimeInterval {
         switch state {
-        case .idle:     return 0.35    // Gentle tail wag
-        case .running:  return 0.15   // Fast running
-        case .walking:  return 0.35   // Moderate walk
+        case .idle:     return 0.35   // Gentle tail wag
+        case .jumping:  return 0.15   // Fast jumping
+        case .walking:  return 0.4    // Moderate walk
         case .tired:    return 0.8    // Slow yawning
         case .sleeping: return 1.2    // Slow ZZ pulse
         }

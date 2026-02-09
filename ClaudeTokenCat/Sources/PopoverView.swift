@@ -247,7 +247,7 @@ struct PopoverView: View {
     private var stateColor: Color {
         switch usageManager.catState {
         case .idle:     return .blue
-        case .running:  return .green
+        case .jumping:  return .green
         case .walking:  return .yellow
         case .tired:    return .orange
         case .sleeping: return .red
