@@ -8,15 +8,13 @@ A macOS menu bar app that tracks your Claude Pro/Max session usage with an anima
 
 The cat animates in the menu bar based on your session usage:
 
-```
-  Usage         State          Animation
- ──────────────────────────────────────────
-  No session    🔵 idle        Sitting, tail wag
-  0 – 39%       🟢 jumping     Energetic jump cycle
-  40 – 79%      🟡 walking     Calm stroll
-  80 – 99%      🟠 tired       Lying down, yawning
-  100%          🔴 sleeping    Lying down, zZZ...
-```
+| Usage | State | Animation |
+|---|---|---|
+| No session | 🔵 idle | Sitting, tail wag |
+| 0 – 39% | 🟢 jumping | Energetic jump cycle |
+| 40 – 79% | 🟡 walking | Calm stroll |
+| 80 – 99% | 🟠 tired | Lying down, yawning |
+| 100% | 🔴 sleeping | Lying down, zZZ... |
 
 ## Features
 
@@ -29,20 +27,11 @@ The cat animates in the menu bar based on your session usage:
 
 ## Getting Started
 
-### Prerequisites
-
-- **macOS 13+** (Ventura or later)
-- Xcode command-line tools:
-  ```bash
-  xcode-select --install
-  ```
-- [Claude Code CLI](https://www.npmjs.com/package/@anthropic-ai/claude-code) (for live usage data):
-  ```bash
-  npm install -g @anthropic-ai/claude-code
-  claude login
-  ```
-
 ### Option 1: Install from .dmg (prebuilt)
+
+> Just want to use the app — no developer tools needed.
+
+**Requirements:** macOS 13+ (Ventura or later)
 
 1. Download `ClaudeTokenCat.dmg` from [Releases](../../releases)
 2. Remove the quarantine attribute (the app is not code-signed, so macOS blocks it):
@@ -54,12 +43,25 @@ The cat animates in the menu bar based on your session usage:
 
 ### Option 2: Build from source
 
+> Want to modify or contribute — requires Xcode.
+
+**Requirements:** macOS 13+ (Ventura or later), [Xcode](https://apps.apple.com/app/xcode/id497799835) (Xcode Command Line Tools alone aren't sufficient)
+
 ```bash
 git clone https://github.com/mjuup/ClaudeTokenCat.git
 cd ClaudeTokenCat
 ./build.sh                         # Build with Swift Package Manager
 cp -r build/ClaudeTokenCat.app /Applications/  # Copy to Applications
 open /Applications/ClaudeTokenCat.app
+```
+
+### Live usage data (for both options)
+
+For real-time Claude usage tracking, install [Claude Code CLI](https://www.npmjs.com/package/@anthropic-ai/claude-code) and log in:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+claude login
 ```
 
 If no valid credentials are found (e.g. you haven't run `claude login`, or you denied the permission request), the app falls back to mock data with a debug "Cycle State" button so you can preview all cat animations.

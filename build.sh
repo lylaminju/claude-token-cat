@@ -6,7 +6,20 @@ APP_DIR="$PROJECT_DIR/build/ClaudeTokenCat.app"
 
 echo "Building ClaudeTokenCat..."
 
-# Build with Swift Package Manager (using Xcode toolchain)
+# Xcode.app is required — Xcode Command Line Tools alone lack the macOS SDK
+# frameworks (SwiftUI, AppKit, Combine) needed for GUI apps.
+if [ ! -d "/Applications/Xcode.app/Contents/Developer" ]; then
+    echo "Error: Xcode.app is required to build ClaudeTokenCat."
+    echo ""
+    echo "The Xcode Command Line Tools don't include the macOS SDK frameworks"
+    echo "(SwiftUI, AppKit) needed for GUI apps. Install Xcode from the App Store:"
+    echo "  https://apps.apple.com/app/xcode/id497799835"
+    echo ""
+    echo "After installing, run:"
+    echo "  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
+    exit 1
+fi
+
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
     swift build --package-path "$PROJECT_DIR"
 
