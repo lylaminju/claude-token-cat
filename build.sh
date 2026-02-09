@@ -16,6 +16,7 @@ mkdir -p "$APP_DIR/Contents/Resources"
 
 cp "$PROJECT_DIR/.build/debug/ClaudeTokenCat" "$APP_DIR/Contents/MacOS/ClaudeTokenCat"
 cp "$PROJECT_DIR/ClaudeTokenCat/Info.plist" "$APP_DIR/Contents/Info.plist"
+cp "$PROJECT_DIR/ClaudeTokenCat/Assets.xcassets/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 
 echo "Build complete: $APP_DIR"
 echo ""

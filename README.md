@@ -11,12 +11,21 @@ The cat animates in the menu bar based on your session usage:
 ```
   Usage         State       Animation
  ──────────────────────────────────────────
-  No session    idle        Sitting, tail wag
-  0 – 39%       jumping     Energetic jump cycle
-  40 – 79%      walking     Calm stroll
-  80 – 99%      tired       Lying down, yawning
-  100%          sleeping    Lying down, zZZ...
+  No session    🔵 idle        Sitting, tail wag
+  0 – 39%       🟢 jumping     Energetic jump cycle
+  40 – 79%      🟡 walking     Calm stroll
+  80 – 99%      🟠 tired       Lying down, yawning
+  100%          🔴 sleeping    Lying down, zZZ...
 ```
+
+## Features
+
+- **Animated pixel art cat** in the menu bar - 5 distinct states that reflect your usage level
+- **Real-time session tracking** - polls Claude's usage API every 5 minutes for live utilization data
+- **Manual refresh** - instant usage update with a single click
+- **Popover dashboard** - session %, weekly usage, extra usage credits, subscription tier, and reset countdown
+- **Zero-config auth** - reads Claude Code CLI credentials from macOS Keychain
+- **Demo mode** - falls back to mock data with a "Cycle State" button when not logged in or permission is denied
 
 ## Getting Started
 
@@ -33,7 +42,17 @@ The cat animates in the menu bar based on your session usage:
   claude login
   ```
 
-### Build & Run
+### Option 1: Install from .dmg (prebuilt)
+
+1. Download `ClaudeTokenCat.dmg` from [Releases](../../releases)
+2. Remove the quarantine attribute (the app is not code-signed, so macOS blocks it):
+   ```bash
+   xattr -d com.apple.quarantine ~/Downloads/ClaudeTokenCat.dmg
+   ```
+3. Open the .dmg and copy `ClaudeTokenCat.app` to your Applications folder
+4. Launch the app — it will appear in your menu bar
+
+### Option 2: Build from source
 
 ```bash
 ./build.sh                         # Build with Swift Package Manager
@@ -57,7 +76,7 @@ ClaudeTokenCat/
 │   ├── Assets.xcassets/                   # Asset catalog (app icon)
 │   │
 │   └── Sources/
-│       ├── ClaudeTokenCatApp.swift        # @main entry point — launches NSApplication
+│       ├── ClaudeTokenCatApp.swift        # @main entry point - launches NSApplication
 │       ├── AppDelegate.swift              # Status bar item, popover, animation loop
 │       ├── TokenUsageManager.swift        # Usage tracking state + API polling
 │       ├── UsageAPIClient.swift           # HTTP client for the usage endpoint
