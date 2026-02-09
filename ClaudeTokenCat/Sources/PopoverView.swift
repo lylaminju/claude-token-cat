@@ -76,20 +76,7 @@ struct PopoverView: View {
                 .frame(height: 8)
 
                 // Detail line
-                if usageManager.isUsingMockData {
-                    HStack {
-                        Text(formatTokenCount(usageManager.tokensUsed))
-                            .font(.system(.caption, design: .monospaced))
-                        Text("/")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(formatTokenCount(usageManager.tokenLimit))
-                            .font(.system(.caption, design: .monospaced))
-                        Text("tokens")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                } else {
+                if !usageManager.isUsingMockData {
                     Text(usageManager.timeRemaining != nil ? "Resets in \(usageManager.timeRemainingFormatted)" : "No active session")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -213,13 +200,24 @@ struct PopoverView: View {
             }
 
             if usageManager.isUsingMockData {
-                HStack(spacing: 4) {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(.secondary)
-                        .font(.caption2)
-                    Text("Run `claude login` to connect")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                if usageManager.keychainAccessDenied {
+                    HStack(spacing: 4) {
+                        Image(systemName: "lock.shield")
+                            .foregroundColor(.orange)
+                            .font(.caption2)
+                        Text("Keychain access denied.\nAllow in Keychain Access.app")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "info.circle")
+                            .foregroundColor(.secondary)
+                            .font(.caption2)
+                        Text("Run `claude login` to connect")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
 

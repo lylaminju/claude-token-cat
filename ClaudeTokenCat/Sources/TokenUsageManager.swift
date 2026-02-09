@@ -19,6 +19,7 @@ final class TokenUsageManager: ObservableObject {
     @Published private(set) var sessionResetDate: Date? = nil
     @Published private(set) var isSessionActive: Bool = false
     @Published private(set) var isUsingMockData: Bool = true
+    @Published private(set) var keychainAccessDenied: Bool = false
     @Published private(set) var errorMessage: String? = nil
     @Published private(set) var lastUpdated: Date? = nil
     @Published private(set) var accountEmail: String? = nil
@@ -82,12 +83,17 @@ final class TokenUsageManager: ObservableObject {
     // MARK: - Init
 
     init() {
-        if let token = ClaudeCodeCredentials.loadAccessToken() {
+        switch ClaudeCodeCredentials.loadAccessToken() {
+        case .success(let token):
             isUsingMockData = false
             accessToken = token
             fetchProfile(accessToken: token)
             startPolling(accessToken: token)
-        } else {
+        case .accessDenied:
+            isUsingMockData = true
+            keychainAccessDenied = true
+            startMockSession()
+        case .notFound:
             isUsingMockData = true
             startMockSession()
         }
@@ -153,7 +159,7 @@ final class TokenUsageManager: ObservableObject {
                 self.lastUpdated = Date()
             } catch UsageAPIError.unauthorized {
                 // Token may have been refreshed by Claude Code - retry with fresh credentials
-                if let freshToken = ClaudeCodeCredentials.loadAccessToken(), freshToken != accessToken {
+                if case .success(let freshToken) = ClaudeCodeCredentials.loadAccessToken(), freshToken != accessToken {
                     self.accessToken = freshToken
                     self.fetchProfile(accessToken: freshToken)
                     self.startPolling(accessToken: freshToken)

@@ -1,13 +1,18 @@
 import Foundation
 import Security
 
+enum KeychainResult {
+    case success(String)
+    case notFound
+    case accessDenied
+}
+
 /// Reads OAuth credentials stored by Claude Code CLI in the macOS Keychain.
 struct ClaudeCodeCredentials {
 
     private static let service = "Claude Code-credentials"
 
-    /// Loads the raw OAuth dictionary from the Keychain.
-    private static func loadOAuthDict() -> [String: Any]? {
+    static func loadAccessToken() -> KeychainResult {
         let account = NSUserName()
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -20,17 +25,22 @@ struct ClaudeCodeCredentials {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        guard status == errSecSuccess, let data = result as? Data,
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let oauth = json["claudeAiOauth"] as? [String: Any] else {
-            return nil
+        switch status {
+        case errSecSuccess:
+            guard let data = result as? Data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let oauth = json["claudeAiOauth"] as? [String: Any],
+                  let token = oauth["accessToken"] as? String else {
+                return .notFound
+            }
+            return .success(token)
+        case errSecItemNotFound:
+            return .notFound
+        default:
+            // errSecUserCanceled (Deny clicked), errSecAuthFailed,
+            // errSecInteractionNotAllowed, etc.
+            return .accessDenied
         }
-
-        return oauth
-    }
-
-    static func loadAccessToken() -> String? {
-        loadOAuthDict()?["accessToken"] as? String
     }
 
 }
