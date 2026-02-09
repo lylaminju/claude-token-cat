@@ -172,17 +172,17 @@ final class TokenUsageManager: ObservableObject {
 
     func startMockSession() {
         isUsingMockData = true
-        isSessionActive = true
-        tokensUsed = 135_000
+        isSessionActive = false
+        tokensUsed = 0
         tokenLimit = 300_000
-        usagePercent = Double(tokensUsed) / Double(tokenLimit) * 100.0
-        sessionResetDate = Date().addingTimeInterval(3 * 60 * 60)  // 3 hours from now
+        usagePercent = 0
+        sessionResetDate = nil
     }
 
     func cycleMockUsage() {
         guard isUsingMockData else { return }
 
-        let levels: [Double] = [0, 30, 45, 65, 85, 95, 100]
+        let levels: [Double] = [00, 20, 60, 90, 100]
         let currentIndex = levels.firstIndex(where: { $0 >= usagePercent }) ?? 0
         let nextIndex = (currentIndex + 1) % levels.count
         let nextPercent = levels[nextIndex]
