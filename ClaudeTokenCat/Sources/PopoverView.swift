@@ -252,6 +252,7 @@ struct PopoverView: View {
         }
         .padding(16)
         .frame(width: 280)
+        .preferredColorScheme(.dark)
     }
 
     // MARK: - Helpers
