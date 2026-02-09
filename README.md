@@ -9,7 +9,7 @@ A macOS menu bar app that tracks your Claude Pro/Max session usage with an anima
 The cat animates in the menu bar based on your session usage:
 
 ```
-  Usage         State       Animation
+  Usage         State          Animation
  ──────────────────────────────────────────
   No session    🔵 idle        Sitting, tail wag
   0 – 39%       🟢 jumping     Energetic jump cycle
@@ -55,9 +55,11 @@ The cat animates in the menu bar based on your session usage:
 ### Option 2: Build from source
 
 ```bash
+git clone https://github.com/mjuup/ClaudeTokenCat.git
+cd ClaudeTokenCat
 ./build.sh                         # Build with Swift Package Manager
-open build/ClaudeTokenCat.app      # Launch the menu bar app
-pkill -f ClaudeTokenCat            # Stop the app
+cp -r build/ClaudeTokenCat.app /Applications/  # Copy to Applications
+open /Applications/ClaudeTokenCat.app
 ```
 
 If no valid credentials are found (e.g. you haven't run `claude login`, or you denied the permission request), the app falls back to mock data with a debug "Cycle State" button so you can preview all cat animations.
