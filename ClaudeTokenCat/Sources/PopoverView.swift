@@ -229,18 +229,26 @@ struct PopoverView: View {
 
             Divider()
 
-            // Quit
-            Button(action: {
-                NSApplication.shared.terminate(nil)
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "power")
-                    Text("Quit")
+            // Quit + Animation toggle
+            HStack {
+                Button(action: {
+                    NSApplication.shared.terminate(nil)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "power")
+                        Text("Quit")
+                    }
+                    .font(.caption)
                 }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+
+                Spacer()
+
+                Toggle("Animate", isOn: $usageManager.animationEnabled)
                 .font(.caption)
+                .toggleStyle(MiniSwitchStyle())
             }
-            .buttonStyle(.plain)
-            .foregroundColor(.secondary)
         }
         .padding(16)
         .frame(width: 280)
@@ -263,5 +271,29 @@ struct PopoverView: View {
             return String(format: "%.1fk", Double(count) / 1000.0)
         }
         return "\(count)"
+    }
+}
+
+// MARK: - Mini Switch Toggle Style
+
+/// Custom switch style that reliably shows blue/gray in NSPopover contexts,
+/// where the native NSSwitch ignores `.tint()`.
+private struct MiniSwitchStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 4) {
+            configuration.label
+            ZStack(alignment: configuration.isOn ? .trailing : .leading) {
+                Capsule()
+                    .fill(configuration.isOn ? Color.blue : Color.gray.opacity(0.3))
+                    .frame(width: 26, height: 15)
+                Circle()
+                    .fill(.white)
+                    .shadow(color: .black.opacity(0.2), radius: 0.5, y: 0.5)
+                    .frame(width: 13, height: 13)
+                    .padding(.horizontal, 1)
+            }
+            .animation(.easeInOut(duration: 0.15), value: configuration.isOn)
+            .onTapGesture { configuration.isOn.toggle() }
+        }
     }
 }

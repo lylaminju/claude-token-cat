@@ -10,6 +10,10 @@ final class TokenUsageManager: ObservableObject {
 
     // MARK: - Published State
 
+    @Published var animationEnabled: Bool = (UserDefaults.standard.object(forKey: "animationEnabled") as? Bool) ?? true {
+        didSet { UserDefaults.standard.set(animationEnabled, forKey: "animationEnabled") }
+    }
+
     @Published private(set) var usagePercent: Double = 0
     @Published private(set) var weeklyUsagePercent: Double = 0
     @Published private(set) var extraUsageEnabled: Bool = false
