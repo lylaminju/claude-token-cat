@@ -109,6 +109,12 @@ struct PopoverView: View {
                         }
                     }
                     .frame(height: 4)
+
+                    if let formatted = usageManager.weeklyResetFormatted {
+                        Text("Resets \(formatted)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
 
