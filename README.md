@@ -41,7 +41,7 @@ open build/ClaudeTokenCat.app      # Launch the menu bar app
 pkill -f ClaudeTokenCat            # Stop the app
 ```
 
-If you haven't run `claude login`, the app falls back to mock data with a debug "Cycle State" button so you can preview all cat animations.
+If no valid credentials are found (e.g. you haven't run `claude login`, or you denied the permission request), the app falls back to mock data with a debug "Cycle State" button so you can preview all cat animations.
 
 ## Project Structure
 
@@ -73,49 +73,26 @@ ClaudeTokenCat/
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      macOS Menu Bar                         │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │  Menu bar icon  ←──  animated image (pixel cat)      │   │
-│  └────────────┬─────────────────────────────────────────┘   │
-│               │ click                                       │
-│  ┌────────────▼─────────────────────────────────────────┐   │
-│  │  Floating panel  →  PopoverView (SwiftUI)            │   │
-│  │  ┌───────────────────────────────────────────────┐   │   │
-│  │  │  Session % bar  ·  Reset timer  ·  Weekly %   │   │   │
-│  │  │  Subscription badge  ·  Account link          │   │   │
-│  │  └───────────────────────────────────────────────┘   │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    Creds["ClaudeCodeCredentials<br>macOS Keychain or ~/.claude/.creds<br>→ OAuth access token"]
 
-                                                   ClaudeCodeCredentials
-                                                   ┌──────────────────────┐
-                                                   │ macOS Keychain or    │
-                                                   │ ~/.claude/.creds     │
-                                                   │ → OAuth access token │
-                                                   └──────────┬───────────┘
-                                                              │
-┌─────────────────────┐       publishes         ┌─────────────▼────────────┐
-│  TokenUsageManager  │ ────────────────────▶   │     AppDelegate          │
-│  (ObservableObject) │   @Published state      │                          │
-│                     │                         │  observes changes →      │
-│  · usagePercent     │                         │  switches CatState →     │
-│  · weeklyUsagePercent   ◀──── Combine ────    │  restarts animation      │
-│  · sessionResetDate │                         │                          │
-│  · isSessionActive  │                         └──────────┬───────────────┘
-│  · catState         │                                    │
-│  · usageRatio       │                                    │ frames(for:)
-└────────┬────────────┘                                    ▼
-         │ fetches via              ┌─────────────────────────────────────┐
-         ▼                          │          CatSpriteRenderer          │
-┌─────────────────────┐             │                                     │
-│  UsageAPIClient     │             │ 28×18 pixel grids → image           │
-│                     │             │ (template for light/dark)           │
-│  GET /api/oauth/    │             │                                     │
-│      usage          │             │ 5 animated states:                  │
-│  GET /api/me        │             │ idle/jumping/walking/tired/sleeping │
-└─────────────────────┘             └─────────────────────────────────────┘
+    Creds --> AppDelegate
+
+    TokenUsageManager["TokenUsageManager<br>(ObservableObject)<br>usagePercent · weeklyUsagePercent<br>sessionResetDate · isSessionActive<br>catState · usageRatio"]
+
+    TokenUsageManager -- "@Published state" --> AppDelegate
+    AppDelegate -- "Combine" --> TokenUsageManager
+
+    AppDelegate["AppDelegate<br>observes changes →<br>switches CatState →<br>restarts animation"]
+
+    AppDelegate -- "frames(for:)" --> CatSpriteRenderer
+
+    TokenUsageManager -- "fetches via" --> UsageAPIClient
+
+    UsageAPIClient["UsageAPIClient<br>GET /api/oauth/usage<br>GET /api/me"]
+
+    CatSpriteRenderer["CatSpriteRenderer<br>28×18 pixel grids → image<br>(template for light/dark)<br>5 animated states:<br>idle / jumping / walking / tired / sleeping"]
 ```
 
 ## API & Usage Data
