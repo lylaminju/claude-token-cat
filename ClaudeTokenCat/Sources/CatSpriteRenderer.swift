@@ -104,7 +104,7 @@ final class CatSpriteRenderer {
     }
 
     // MARK: - Sprite Data
-    // 20x20 grids, 1 = white pixel, 0 = transparent
+    // 28x18 grids, 1 = white pixel, 0 = transparent
     // Each state has 2-3 frames for animation
 
     // ── IDLE: Sitting upright, tail wagging, 1px outline style ──
