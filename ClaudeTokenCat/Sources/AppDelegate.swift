@@ -28,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Status Bar
 
     private func setupStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: CGFloat(CatSpriteRenderer.spriteWidth))
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem.button {
             button.action = #selector(showMenu)
@@ -75,6 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 if newState != self.currentState {
                     self.switchToState(newState)
                 }
+                self.updatePercentageDisplay()
             }
             .store(in: &cancellables)
 
@@ -86,6 +87,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.switchToState(self.currentState)
             }
             .store(in: &cancellables)
+
+        // Watch for percentage display toggle
+        usageManager.$showPercentageInMenuBar
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updatePercentageDisplay()
+            }
+            .store(in: &cancellables)
     }
 
     private func switchToState(_ state: CatState) {
@@ -94,9 +103,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         currentFrameIndex = 0
 
         // Set first frame immediately
-        if let first = currentFrames.first {
-            statusItem.button?.image = first
-        }
+        currentFrameIndex = 0
+        updateStatusImage()
 
         // Restart animation timer (only when not paused)
         animationTimer?.invalidate()
@@ -116,7 +124,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func advanceFrame() {
         guard !currentFrames.isEmpty else { return }
         currentFrameIndex = (currentFrameIndex + 1) % currentFrames.count
-        statusItem.button?.image = currentFrames[currentFrameIndex]
+        updateStatusImage()
+    }
+
+    private func updatePercentageDisplay() {
+        updateStatusImage()
+    }
+
+    /// Composites percentage text into the cat image so the cat never shifts position when toggling.
+    private func updateStatusImage() {
+        guard !currentFrames.isEmpty else { return }
+        let catFrame = currentFrames[currentFrameIndex]
+
+        if usageManager.showPercentageInMenuBar && usageManager.isSessionActive {
+            statusItem.button?.image = compositeImage(catFrame: catFrame, text: "\(Int(usageManager.usagePercent))%")
+        } else {
+            statusItem.button?.image = catFrame
+        }
+    }
+
+    private func compositeImage(catFrame: NSImage, text: String) -> NSImage {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.black,
+        ]
+        let textSize = (text as NSString).size(withAttributes: attrs)
+        let spacing: CGFloat = 6
+        let totalWidth = textSize.width + spacing + catFrame.size.width
+        let height = max(catFrame.size.height, textSize.height)
+
+        let composite = NSImage(size: NSSize(width: totalWidth, height: height))
+        composite.lockFocus()
+        (text as NSString).draw(
+            at: NSPoint(x: 0, y: (height - textSize.height) / 2),
+            withAttributes: attrs
+        )
+        catFrame.draw(
+            in: NSRect(x: textSize.width + spacing, y: (height - catFrame.size.height) / 2,
+                       width: catFrame.size.width, height: catFrame.size.height),
+            from: .zero, operation: .sourceOver, fraction: 1.0
+        )
+        composite.unlockFocus()
+        composite.isTemplate = true
+        return composite
     }
 
     /// Different states animate at different speeds.
@@ -143,5 +194,9 @@ extension AppDelegate: NSMenuDelegate {
         DispatchQueue.main.async {
             menu.items.first?.view?.window?.appearance = NSAppearance(named: .darkAqua)
         }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        NotificationCenter.default.post(name: .popoverDidClose, object: nil)
     }
 }

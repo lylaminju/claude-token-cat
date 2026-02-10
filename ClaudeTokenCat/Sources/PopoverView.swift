@@ -4,8 +4,26 @@ import SwiftUI
 
 struct PopoverView: View {
     @ObservedObject var usageManager: TokenUsageManager
+    @State private var showSettings: Bool = false
 
     var body: some View {
+        Group {
+            if showSettings {
+                settingsView
+            } else {
+                mainView
+            }
+        }
+        .frame(width: 280)
+        .preferredColorScheme(.dark)
+        .onReceive(NotificationCenter.default.publisher(for: .popoverDidClose)) { _ in
+            showSettings = false
+        }
+    }
+
+    // MARK: - Main View
+
+    private var mainView: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             VStack(alignment: .leading, spacing: 2) {
@@ -77,7 +95,7 @@ struct PopoverView: View {
 
                 // Detail line
                 if !usageManager.isUsingMockData {
-                    Text(usageManager.timeRemaining != nil ? "Resets in \(usageManager.timeRemainingFormatted)" : "No active session")
+                    Text(usageManager.sessionResetDisplayText ?? "No active session")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -110,8 +128,8 @@ struct PopoverView: View {
                     }
                     .frame(height: 4)
 
-                    if let formatted = usageManager.weeklyResetFormatted {
-                        Text("Resets \(formatted)")
+                    if let text = usageManager.weeklyResetDisplayText {
+                        Text(text)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -229,8 +247,20 @@ struct PopoverView: View {
 
             Divider()
 
-            // Quit + Animation toggle
+            // Settings + Quit
             HStack {
+                Button(action: { showSettings = true }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "gearshape")
+                        Text("Settings")
+                    }
+                    .font(.caption)
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+
+                Spacer()
+
                 Button(action: {
                     NSApplication.shared.terminate(nil)
                 }) {
@@ -242,20 +272,99 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
-
-                Spacer()
-
-                Toggle("Animate", isOn: $usageManager.animationEnabled)
-                .font(.caption)
-                .toggleStyle(MiniSwitchStyle())
             }
         }
         .padding(16)
-        .frame(width: 280)
-        .preferredColorScheme(.dark)
+    }
+
+    // MARK: - Settings View
+
+    private var settingsView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with back button
+            HStack(spacing: 6) {
+                Button(action: { showSettings = false }) {
+                    Image(systemName: "chevron.left")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+
+                Text("Settings")
+                    .font(.headline)
+
+                Spacer()
+            }
+
+            Divider()
+
+            // Animation toggle
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Animation")
+                        .font(.subheadline)
+                    Text("Animate the cat in the menu bar")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Toggle("", isOn: $usageManager.animationEnabled)
+                    .toggleStyle(MiniSwitchStyle())
+                    .labelsHidden()
+            }
+
+            Divider()
+
+            // Menu bar percentage toggle
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Menu Bar Percentage")
+                        .font(.subheadline)
+                    Text("Show usage % next to the cat")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Toggle("", isOn: $usageManager.showPercentageInMenuBar)
+                    .toggleStyle(MiniSwitchStyle())
+                    .labelsHidden()
+            }
+
+            Divider()
+
+            // Reset time format
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Reset Time Format")
+                    .font(.subheadline)
+                Picker("", selection: $usageManager.resetTimeFormat) {
+                    Text("Relative").tag(ResetTimeFormat.relative)
+                    Text("Absolute").tag(ResetTimeFormat.absolute)
+                    Text("Both").tag(ResetTimeFormat.both)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .font(.caption2)
+                .controlSize(.small)
+
+                Text(resetTimeExample)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(16)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - Helpers
+
+    private var resetTimeExample: String {
+        switch usageManager.resetTimeFormat {
+        case .relative: return "e.g. Resets in 2d 7h"
+        case .absolute: return "e.g. Resets Fri 6:59 PM"
+        case .both:     return "e.g. Resets in 2d 7h (Fri 6:59 PM)"
+        }
+    }
 
     private var stateColor: Color {
         switch usageManager.catState {
@@ -300,4 +409,10 @@ private struct MiniSwitchStyle: ToggleStyle {
         }
         .buttonStyle(.plain)
     }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let popoverDidClose = Notification.Name("popoverDidClose")
 }

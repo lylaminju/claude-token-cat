@@ -22,7 +22,11 @@ The cat animates in the menu bar based on your session usage:
 - **Real-time session tracking** - polls Claude's usage API every 5 minutes for live utilization data
 - **Manual refresh** - instant usage update with a single click
 - **Popover dashboard** - session %, weekly usage, extra usage credits, subscription tier, and reset countdown
-- **Zero-config auth** - reads Claude Code CLI credentials from macOS Keychain
+- **Settings panel** - configurable options that persist across launches:
+  - **Animation toggle** - pause/resume the cat animation
+  - **Menu bar percentage** - show usage % next to the cat icon
+  - **Reset time format** - choose relative ("2d 7h"), absolute ("Fri 6:59 PM"), or both
+- **Zero-config auth** - automatically reads Claude Code CLI credentials from macOS Keychain
 - **Demo mode** - falls back to mock data with a "Cycle State" button when not logged in or permission is denied
 
 ## Getting Started
@@ -132,3 +136,4 @@ OAuth credentials are read from Claude Code's stored authentication (macOS Keych
 - [Claude Code GitHub - Issue #13334](https://github.com/anthropics/claude-code/issues/13334) — confirms `user:profile` OAuth scope is required for usage data
 - [codelynx.dev - Claude Code Usage Limits in Statusline](https://codelynx.dev/posts/claude-code-usage-limits-statusline) — documents how the endpoint was discovered via network interception
 - [Anthropic API Rate Limits (official)](https://docs.anthropic.com/en/api/rate-limits) — official rate limit documentation (different from the usage endpoint above)
+- [Piskel](https://www.piskelapp.com/) — free online sprite editor used to create the pixel art animations
