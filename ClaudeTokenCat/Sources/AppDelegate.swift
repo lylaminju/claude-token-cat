@@ -144,4 +144,8 @@ extension AppDelegate: NSMenuDelegate {
             menu.items.first?.view?.window?.appearance = NSAppearance(named: .darkAqua)
         }
     }
+
+    func menuDidClose(_ menu: NSMenu) {
+        NotificationCenter.default.post(name: .popoverDidClose, object: nil)
+    }
 }
