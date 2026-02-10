@@ -291,10 +291,12 @@ struct PopoverView: View {
                     Image(systemName: "chevron.left")
                         .font(.caption)
                         .fontWeight(.medium)
+                        .frame(width: 22, height: 18)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
-                .hoverHighlight()
+                .hoverHighlight(expand: 0)
 
                 Text("Settings")
                     .font(.headline)
@@ -421,6 +423,7 @@ private struct MiniSwitchStyle: ToggleStyle {
 
 private struct HoverHighlight: ViewModifier {
     var hoverColor: Color = Color.white.opacity(0.1)
+    var expand: CGFloat = 6
     @State private var isHovered = false
 
     func body(content: Content) -> some View {
@@ -428,7 +431,7 @@ private struct HoverHighlight: ViewModifier {
             .background(
                 RoundedRectangle(cornerRadius: 4)
                     .fill(isHovered ? hoverColor : Color.clear)
-                    .padding(.horizontal, -6)
+                    .padding(.horizontal, -expand)
                     .padding(.vertical, -2)
             )
             .onHover { isHovered = $0 }
@@ -436,8 +439,8 @@ private struct HoverHighlight: ViewModifier {
 }
 
 extension View {
-    fileprivate func hoverHighlight(_ color: Color = Color.white.opacity(0.1)) -> some View {
-        modifier(HoverHighlight(hoverColor: color))
+    fileprivate func hoverHighlight(_ color: Color = Color.white.opacity(0.1), expand: CGFloat = 6) -> some View {
+        modifier(HoverHighlight(hoverColor: color, expand: expand))
     }
 }
 
