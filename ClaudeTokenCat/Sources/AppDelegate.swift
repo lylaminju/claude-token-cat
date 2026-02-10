@@ -7,6 +7,7 @@ import Combine
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusItem: NSStatusItem!
+    private var menu: NSMenu!
     private var hostingView: NSHostingView<PopoverView>!
     private var animationTimer: Timer?
     private var currentFrameIndex = 0
@@ -29,9 +30,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: CGFloat(CatSpriteRenderer.spriteWidth))
 
+        if let button = statusItem.button {
+            button.action = #selector(showMenu)
+            button.target = self
+        }
+
         // Use NSMenu with a custom view instead of NSPopover.
         // An open NSMenu keeps the menu bar visible even when auto-hide is enabled.
-        let menu = NSMenu()
+        menu = NSMenu()
         menu.delegate = self
 
         hostingView = NSHostingView(rootView: PopoverView(usageManager: usageManager))
@@ -39,8 +45,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menuItem = NSMenuItem()
         menuItem.view = hostingView
         menu.addItem(menuItem)
+    }
 
-        statusItem.menu = menu
+    @objc private func showMenu() {
+        guard let button = statusItem.button,
+              let window = button.window else { return }
+
+        // Convert button position to screen coordinates
+        let buttonRect = window.convertToScreen(button.convert(button.bounds, to: nil))
+
+        // Center the menu horizontally under the cat icon, with a small gap below the menu bar
+        let menuWidth: CGFloat = 280
+        let x = buttonRect.midX - menuWidth / 2
+        let y = buttonRect.minY - 10
+        menu.popUp(positioning: nil, at: NSPoint(x: x, y: y), in: nil)
     }
 
     // MARK: - Animation
