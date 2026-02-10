@@ -1,6 +1,14 @@
 import Foundation
 import Combine
 
+// MARK: - Reset Time Format
+
+enum ResetTimeFormat: String, CaseIterable {
+    case relative
+    case absolute
+    case both
+}
+
 // MARK: - Token Usage Manager
 
 /// Tracks Claude API token usage within a 5-hour session window.
@@ -12,6 +20,14 @@ final class TokenUsageManager: ObservableObject {
 
     @Published var animationEnabled: Bool = (UserDefaults.standard.object(forKey: "animationEnabled") as? Bool) ?? true {
         didSet { UserDefaults.standard.set(animationEnabled, forKey: "animationEnabled") }
+    }
+
+    @Published var showPercentageInMenuBar: Bool = (UserDefaults.standard.object(forKey: "showPercentageInMenuBar") as? Bool) ?? false {
+        didSet { UserDefaults.standard.set(showPercentageInMenuBar, forKey: "showPercentageInMenuBar") }
+    }
+
+    @Published var resetTimeFormat: ResetTimeFormat = ResetTimeFormat(rawValue: UserDefaults.standard.string(forKey: "resetTimeFormat") ?? "relative") ?? .relative {
+        didSet { UserDefaults.standard.set(resetTimeFormat.rawValue, forKey: "resetTimeFormat") }
     }
 
     @Published private(set) var usagePercent: Double = 0
@@ -58,21 +74,52 @@ final class TokenUsageManager: ObservableObject {
         return max(remaining, 0)
     }
 
-    /// Formatted time remaining string (e.g. "2h 50m")
+    /// Formatted time remaining string (e.g. "2h 50m" or "2d 7h")
     var timeRemainingFormatted: String {
         guard let remaining = timeRemaining else { return "no active session" }
-        if remaining <= 0 { return "now" }
-        let hours = Int(remaining) / 3600
-        let minutes = (Int(remaining) % 3600) / 60
-        return "\(hours)h \(minutes)m"
+        return Self.relativeString(from: remaining)
     }
 
-    /// Formatted weekly reset time (e.g. "Fri 6:23 PM"), nil when unavailable
-    var weeklyResetFormatted: String? {
+    /// Formatted reset display text for session, respecting the format setting
+    var sessionResetDisplayText: String? {
+        guard timeRemaining != nil else { return nil }
+        return resetDisplayText(for: sessionResetDate, relative: timeRemainingFormatted)
+    }
+
+    /// Formatted reset display text for weekly, respecting the format setting
+    var weeklyResetDisplayText: String? {
         guard let date = weeklyResetDate else { return nil }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE h:mm a"
-        return formatter.string(from: date)
+        let remaining = max(date.timeIntervalSinceNow, 0)
+        return resetDisplayText(for: date, relative: Self.relativeString(from: remaining))
+    }
+
+    private func resetDisplayText(for date: Date?, relative: String) -> String? {
+        guard let date else { return "Resets in \(relative)" }
+        switch resetTimeFormat {
+        case .relative:
+            return "Resets in \(relative)"
+        case .absolute:
+            return "Resets \(Self.absoluteDateFormatter.string(from: date))"
+        case .both:
+            return "Resets in \(relative) (\(Self.absoluteDateFormatter.string(from: date)))"
+        }
+    }
+
+    private static let absoluteDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE h:mm a"
+        return f
+    }()
+
+    private static func relativeString(from interval: TimeInterval) -> String {
+        if interval <= 0 { return "now" }
+        let days = Int(interval) / 86400
+        let hours = (Int(interval) % 86400) / 3600
+        let minutes = (Int(interval) % 3600) / 60
+        if days > 0 {
+            return "\(days)d \(hours)h"
+        }
+        return "\(hours)h \(minutes)m"
     }
 
     // MARK: - Configuration
