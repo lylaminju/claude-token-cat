@@ -190,10 +190,6 @@ extension AppDelegate: NSMenuDelegate {
         let fitting = hostingView.fittingSize
         hostingView.setFrameSize(NSSize(width: 280, height: fitting.height))
 
-        // Force dark appearance on the menu window
-        DispatchQueue.main.async {
-            menu.items.first?.view?.window?.appearance = NSAppearance(named: .darkAqua)
-        }
     }
 
     func menuDidClose(_ menu: NSMenu) {

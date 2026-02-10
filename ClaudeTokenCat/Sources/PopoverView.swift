@@ -5,6 +5,7 @@ import SwiftUI
 struct PopoverView: View {
     @ObservedObject var usageManager: TokenUsageManager
     @State private var showSettings: Bool = false
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Group {
@@ -15,7 +16,6 @@ struct PopoverView: View {
             }
         }
         .frame(width: 280)
-        .preferredColorScheme(.dark)
         .onReceive(NotificationCenter.default.publisher(for: .popoverDidClose)) { _ in
             showSettings = false
         }
@@ -169,11 +169,11 @@ struct PopoverView: View {
             if let error = usageManager.errorMessage {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
+                        .foregroundColor(adaptiveOrange)
                         .font(.caption)
                     Text(error)
                         .font(.caption2)
-                        .foregroundColor(.orange)
+                        .foregroundColor(adaptiveOrange)
                 }
             }
 
@@ -198,7 +198,7 @@ struct PopoverView: View {
             } else {
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(adaptiveGreen)
                         .font(.caption)
                     Text("Connected")
                         .font(.caption)
@@ -228,11 +228,11 @@ struct PopoverView: View {
                 if usageManager.keychainAccessDenied {
                     HStack(spacing: 4) {
                         Image(systemName: "lock.shield")
-                            .foregroundColor(.orange)
+                            .foregroundColor(adaptiveOrange)
                             .font(.caption2)
                         Text("Keychain access denied.\nAllow in Keychain Access.app")
                             .font(.caption2)
-                            .foregroundColor(.orange)
+                            .foregroundColor(adaptiveOrange)
                     }
                 } else {
                     HStack(spacing: 4) {
@@ -374,13 +374,27 @@ struct PopoverView: View {
         }
     }
 
+    private var adaptiveGreen: Color {
+        colorScheme == .dark ? .green : Color(red: 0.0, green: 0.55, blue: 0.2)
+    }
+
+    private var adaptiveOrange: Color {
+        colorScheme == .dark ? .orange : Color(red: 0.8, green: 0.4, blue: 0.0)
+    }
+
     private var stateColor: Color {
+        let isDark = colorScheme == .dark
         switch usageManager.catState {
-        case .idle:     return .blue
-        case .jumping:  return .green
-        case .walking:  return .yellow
-        case .tired:    return .orange
-        case .sleeping: return Color(red: 0.85, green: 0.35, blue: 0.45)
+        case .idle:
+            return isDark ? .blue : Color(red: 0.0, green: 0.35, blue: 0.85)
+        case .jumping:
+            return adaptiveGreen
+        case .walking:
+            return isDark ? .yellow : Color(red: 0.7, green: 0.56, blue: 0.0)
+        case .tired:
+            return adaptiveOrange
+        case .sleeping:
+            return isDark ? Color(red: 0.85, green: 0.35, blue: 0.45) : Color(red: 0.7, green: 0.2, blue: 0.35)
         }
     }
 
@@ -422,7 +436,7 @@ private struct MiniSwitchStyle: ToggleStyle {
 // MARK: - Hover Highlight
 
 private struct HoverHighlight: ViewModifier {
-    var hoverColor: Color = Color.white.opacity(0.1)
+    var hoverColor: Color = Color.primary.opacity(0.1)
     var expand: CGFloat = 6
     @State private var isHovered = false
 
@@ -439,7 +453,7 @@ private struct HoverHighlight: ViewModifier {
 }
 
 extension View {
-    fileprivate func hoverHighlight(_ color: Color = Color.white.opacity(0.1), expand: CGFloat = 6) -> some View {
+    fileprivate func hoverHighlight(_ color: Color = Color.primary.opacity(0.1), expand: CGFloat = 6) -> some View {
         modifier(HoverHighlight(hoverColor: color, expand: expand))
     }
 }
