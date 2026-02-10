@@ -281,20 +281,23 @@ struct PopoverView: View {
 /// where the native NSSwitch ignores `.tint()`.
 private struct MiniSwitchStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 4) {
-            configuration.label
-            ZStack(alignment: configuration.isOn ? .trailing : .leading) {
-                Capsule()
-                    .fill(configuration.isOn ? Color.blue : Color.gray.opacity(0.3))
-                    .frame(width: 26, height: 15)
-                Circle()
-                    .fill(.white)
-                    .shadow(color: .black.opacity(0.2), radius: 0.5, y: 0.5)
-                    .frame(width: 13, height: 13)
-                    .padding(.horizontal, 1)
+        // Use Button instead of .onTapGesture — NSMenu's event tracking swallows gesture recognizers
+        Button(action: { configuration.isOn.toggle() }) {
+            HStack(spacing: 4) {
+                configuration.label
+                ZStack(alignment: configuration.isOn ? .trailing : .leading) {
+                    Capsule()
+                        .fill(configuration.isOn ? Color.blue : Color.gray.opacity(0.3))
+                        .frame(width: 26, height: 15)
+                    Circle()
+                        .fill(.white)
+                        .shadow(color: .black.opacity(0.2), radius: 0.5, y: 0.5)
+                        .frame(width: 13, height: 13)
+                        .padding(.horizontal, 1)
+                }
+                .animation(.easeInOut(duration: 0.15), value: configuration.isOn)
             }
-            .animation(.easeInOut(duration: 0.15), value: configuration.isOn)
-            .onTapGesture { configuration.isOn.toggle() }
         }
+        .buttonStyle(.plain)
     }
 }

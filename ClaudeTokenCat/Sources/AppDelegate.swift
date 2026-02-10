@@ -7,7 +7,7 @@ import Combine
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
+    private var hostingView: NSHostingView<PopoverView>!
     private var animationTimer: Timer?
     private var currentFrameIndex = 0
     private var currentFrames: [NSImage] = []
@@ -20,7 +20,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
-        setupPopover()
         observeUsageChanges()
         switchToState(.idle)
     }
@@ -30,43 +29,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: CGFloat(CatSpriteRenderer.spriteWidth))
 
-        if let button = statusItem.button {
-            button.action = #selector(togglePopover)
-            button.target = self
-            // Initial image will be set by switchToState
-        }
-    }
+        // Use NSMenu with a custom view instead of NSPopover.
+        // An open NSMenu keeps the menu bar visible even when auto-hide is enabled.
+        let menu = NSMenu()
+        menu.delegate = self
 
-    // MARK: - Popover
+        hostingView = NSHostingView(rootView: PopoverView(usageManager: usageManager))
 
-    private func setupPopover() {
-        popover = NSPopover()
-        popover.contentSize = NSSize(width: 280, height: 300)
-        popover.behavior = .transient
-        popover.animates = true
-        popover.contentViewController = NSHostingController(
-            rootView: PopoverView(usageManager: usageManager)
-        )
-    }
+        let menuItem = NSMenuItem()
+        menuItem.view = hostingView
+        menu.addItem(menuItem)
 
-    @objc private func togglePopover() {
-        guard let button = statusItem.button else { return }
-        if popover.isShown {
-            popover.performClose(nil)
-        } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            // Bring popover to front
-            NSApp.activate(ignoringOtherApps: true)
-        }
+        statusItem.menu = menu
     }
 
     // MARK: - Animation
 
     private func observeUsageChanges() {
         // Watch for state changes from the usage manager
+        // Use DispatchQueue.main (not RunLoop.main) so updates fire during NSMenu event tracking
         usageManager.$usagePercent
             .combineLatest(usageManager.$isSessionActive)
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _, _ in
                 guard let self else { return }
                 let newState = self.usageManager.catState
@@ -78,7 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Watch for animation pause toggle
         usageManager.$animationEnabled
-            .receive(on: RunLoop.main)
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 guard let self else { return }
                 self.switchToState(self.currentState)
@@ -103,9 +87,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard usageManager.animationEnabled else { return }
 
         let interval = animationInterval(for: state)
-        animationTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             self?.advanceFrame()
         }
+        // .common includes event-tracking mode so the animation keeps running while the menu is open
+        RunLoop.main.add(timer, forMode: .common)
+        animationTimer = timer
     }
 
     private func advanceFrame() {
@@ -122,6 +109,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .walking:  return 0.4    // Moderate walk
         case .tired:    return 0.8    // Slow yawning
         case .sleeping: return 1.2    // Slow ZZ pulse
+        }
+    }
+}
+
+// MARK: - NSMenuDelegate
+
+extension AppDelegate: NSMenuDelegate {
+    func menuWillOpen(_ menu: NSMenu) {
+        // Recompute size each time the menu opens so dynamic content is fully visible
+        let fitting = hostingView.fittingSize
+        hostingView.setFrameSize(NSSize(width: 280, height: fitting.height))
+
+        // Force dark appearance on the menu window
+        DispatchQueue.main.async {
+            menu.items.first?.view?.window?.appearance = NSAppearance(named: .darkAqua)
         }
     }
 }
