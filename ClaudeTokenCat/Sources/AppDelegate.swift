@@ -136,7 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !currentFrames.isEmpty else { return }
         let catFrame = currentFrames[currentFrameIndex]
 
-        if usageManager.showPercentageInMenuBar && usageManager.isSessionActive {
+        if usageManager.showPercentageInMenuBar {
             statusItem.button?.image = compositeImage(catFrame: catFrame, text: "\(Int(usageManager.usagePercent))%")
         } else {
             statusItem.button?.image = catFrame
