@@ -40,6 +40,7 @@ struct PopoverView: View {
                         }
                         .foregroundColor(.secondary)
                     }
+                    .hoverHighlight()
                 }
                 HStack(spacing: 4) {
                     if let sub = usageManager.subscriptionType {
@@ -258,6 +259,7 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
+                .hoverHighlight()
 
                 Spacer()
 
@@ -272,6 +274,7 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
+                .hoverHighlight(Color.red.opacity(0.15))
             }
         }
         .padding(.horizontal, 16)
@@ -291,6 +294,7 @@ struct PopoverView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
+                .hoverHighlight()
 
                 Text("Settings")
                     .font(.headline)
@@ -410,6 +414,30 @@ private struct MiniSwitchStyle: ToggleStyle {
             }
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Hover Highlight
+
+private struct HoverHighlight: ViewModifier {
+    var hoverColor: Color = Color.white.opacity(0.1)
+    @State private var isHovered = false
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(isHovered ? hoverColor : Color.clear)
+                    .padding(.horizontal, -6)
+                    .padding(.vertical, -2)
+            )
+            .onHover { isHovered = $0 }
+    }
+}
+
+extension View {
+    fileprivate func hoverHighlight(_ color: Color = Color.white.opacity(0.1)) -> some View {
+        modifier(HoverHighlight(hoverColor: color))
     }
 }
 
