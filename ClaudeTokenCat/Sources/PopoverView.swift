@@ -274,7 +274,8 @@ struct PopoverView: View {
                 .foregroundColor(.secondary)
             }
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
     }
 
     // MARK: - Settings View
@@ -352,7 +353,8 @@ struct PopoverView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
         .frame(maxHeight: .infinity, alignment: .top)
     }
 
