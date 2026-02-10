@@ -8,13 +8,13 @@ A macOS menu bar app that tracks your Claude Pro/Max session usage with an anima
 
 The cat animates in the menu bar based on your session usage:
 
-| Usage | State | Animation |
-|---|---|---|
-| No session | 🔵 idle | Sitting, tail wag |
-| 0 – 39% | 🟢 jumping | Energetic jump cycle |
-| 40 – 79% | 🟡 walking | Calm stroll |
-| 80 – 99% | 🟠 tired | Lying down, yawning |
-| 100% | 🔴 sleeping | Lying down, zZZ... |
+| Usage      | State       | Animation            |
+| ---------- | ----------- | -------------------- |
+| No session | 🔵 idle     | Sitting, tail wag    |
+| 0 – 39%    | 🟢 jumping  | Energetic jump cycle |
+| 40 – 79%   | 🟡 walking  | Calm stroll          |
+| 80 – 99%   | 🟠 tired    | Lying down, yawning  |
+| 100%       | 🔴 sleeping | Lying down, zZZ...   |
 
 ## Features
 
@@ -29,27 +29,29 @@ The cat animates in the menu bar based on your session usage:
 - **Zero-config auth** - automatically reads Claude Code CLI credentials from macOS Keychain
 - **Demo mode** - falls back to mock data with a "Cycle State" button when not logged in or permission is denied
 
-## Getting Started
-
-### Option 1: Install from .dmg (prebuilt)
-
-> Just want to use the app — no developer tools needed.
+## Installation
 
 **Requirements:** macOS 13+ (Ventura or later)
 
-1. Download `ClaudeTokenCat.dmg` from [Releases](../../releases)
-2. Remove the quarantine attribute (the app is not code-signed, so macOS blocks it):
+### Option 1: Homebrew (recommended)
+
+```bash
+brew install --cask lylaminju/tap/claude-token-cat
+```
+
+### Option 2: Direct download
+
+1. Download `ClaudeTokenCat.dmg` from [Releases](../../releases) (_Don't open the .dmg until you complete Step 2_)
+2. Remove the quarantine attribute (the app is not code-signed yet, so macOS blocks it):
    ```bash
    xattr -d com.apple.quarantine ~/Downloads/ClaudeTokenCat.dmg
    ```
 3. Open the .dmg and copy `ClaudeTokenCat.app` to your Applications folder
 4. Launch the app — it will appear in your menu bar
 
-### Option 2: Build from source
+### Option 3: Build from source
 
-> Want to modify or contribute — requires Xcode.
-
-**Requirements:** macOS 13+ (Ventura or later), [Xcode](https://apps.apple.com/app/xcode/id497799835) (Xcode Command Line Tools alone aren't sufficient)
+**Additional requirement:** [Xcode](https://apps.apple.com/app/xcode/id497799835) (Xcode Command Line Tools alone aren't sufficient)
 
 ```bash
 git clone https://github.com/mjuup/ClaudeTokenCat.git
@@ -59,7 +61,7 @@ cp -r build/ClaudeTokenCat.app /Applications/  # Copy to Applications
 open /Applications/ClaudeTokenCat.app
 ```
 
-### Live usage data (for both options)
+### Live usage data (for all options)
 
 For real-time Claude usage tracking, install [Claude Code CLI](https://www.npmjs.com/package/@anthropic-ai/claude-code) and log in:
 
