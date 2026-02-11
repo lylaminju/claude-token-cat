@@ -28,3 +28,12 @@
 - `tools/preview_sprites.py` — Parse and preview sprites from Swift source as ASCII or PNG (`--png --state idle`)
 - `tools/piskel2swift.py` — Convert .piskel files to Swift arrays
 - `tools/live_preview.sh` — Watch Swift file and auto-regenerate preview PNGs on save
+
+## Code Quality
+
+- Before presenting Swift code changes, self-review for:
+  - Dead code (unused functions, variables, imports)
+  - Security issues (injection, insecure storage, hardcoded secrets)
+  - Memory leaks (retain cycles, missing `[weak self]` in closures)
+  - Inefficient logic (unnecessary allocations, O(n²) where O(n) is possible)
+- Flag any concerns explicitly in your response
