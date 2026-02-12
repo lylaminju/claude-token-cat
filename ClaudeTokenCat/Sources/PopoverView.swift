@@ -398,12 +398,6 @@ struct PopoverView: View {
         }
     }
 
-    private func formatTokenCount(_ count: Int) -> String {
-        if count >= 1000 {
-            return String(format: "%.1fk", Double(count) / 1000.0)
-        }
-        return "\(count)"
-    }
 }
 
 // MARK: - Mini Switch Toggle Style

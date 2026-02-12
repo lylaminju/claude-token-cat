@@ -161,12 +161,14 @@ final class TokenUsageManager: ObservableObject {
 
     deinit {
         pollTimer?.invalidate()
+        fetchTask?.cancel()
     }
 
     // MARK: - Profile
 
     private func fetchProfile(accessToken: String) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             if let profile = try? await UsageAPIClient.fetchProfile(accessToken: accessToken) {
                 self.accountEmail = profile.account.email
                 self.subscriptionType = Self.formatSubscriptionType(profile.organization?.organization_type)
@@ -188,7 +190,8 @@ final class TokenUsageManager: ObservableObject {
 
     private func fetchUsage(accessToken: String) {
         fetchTask?.cancel()
-        fetchTask = Task { @MainActor in
+        fetchTask = Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
                 let response = try await UsageAPIClient.fetchUsage(accessToken: accessToken)
                 self.errorMessage = nil
@@ -235,6 +238,9 @@ final class TokenUsageManager: ObservableObject {
                 }
             } catch let error as UsageAPIError {
                 self.errorMessage = error.errorDescription
+            } catch is CancellationError {
+                // Task was cancelled by a newer fetch — ignore silently
+                return
             } catch {
                 self.errorMessage = error.localizedDescription
             }
