@@ -33,6 +33,19 @@ The cat animates in the menu bar based on your session usage:
 
 **Requirements:** macOS 13+ (Ventura or later)
 
+### Prerequisites
+
+For real-time Claude usage tracking, install [Claude Code CLI](https://www.npmjs.com/package/@anthropic-ai/claude-code) and log in:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+claude login
+```
+
+> On first launch, macOS will ask to access your Keychain. Allow it to enable real-time usage tracking.
+
+If no valid credentials are found (e.g. you haven't run `claude login`, or you denied the permission request), the app falls back to mock data with a debug "Cycle State" button so you can preview all cat animations.
+
 ### Option 1: Homebrew (recommended)
 
 ```bash
@@ -61,16 +74,6 @@ cp -r build/ClaudeTokenCat.app /Applications/  # Copy to Applications
 open /Applications/ClaudeTokenCat.app
 ```
 
-### Live usage data (for all options)
-
-For real-time Claude usage tracking, install [Claude Code CLI](https://www.npmjs.com/package/@anthropic-ai/claude-code) and log in:
-
-```bash
-npm install -g @anthropic-ai/claude-code
-claude login
-```
-
-If no valid credentials are found (e.g. you haven't run `claude login`, or you denied the permission request), the app falls back to mock data with a debug "Cycle State" button so you can preview all cat animations.
 
 ## Project Structure
 
@@ -106,18 +109,23 @@ ClaudeTokenCat/
 graph TD
     Creds["<b>[ ClaudeCodeCredentials ]</b><br>macOS Keychain or ~/.claude/.creds<br>→ OAuth access token"]
 
-    Creds --> AppDelegate
+    Creds --> TokenUsageManager
 
     TokenUsageManager["<b>[ TokenUsageManager ]</b><br>(ObservableObject)<br>usagePercent · weeklyUsagePercent<br>sessionResetDate · isSessionActive<br>catState · usageRatio"]
 
     TokenUsageManager -- "@Published state" --> AppDelegate
-    AppDelegate -- "Combine" --> TokenUsageManager
+    AppDelegate -- "Combine subscribe" --> TokenUsageManager
+
+    TokenUsageManager -- "fetches via" --> UsageAPIClient
+
+    TokenUsageManager -- "@ObservedObject" --> PopoverView
 
     AppDelegate["<b>[ AppDelegate ]</b><br>observes changes →<br>switches CatState →<br>restarts animation"]
 
+    AppDelegate -- "hosts" --> PopoverView
     AppDelegate -- "frames(for:)" --> CatSpriteRenderer
 
-    TokenUsageManager -- "fetches via" --> UsageAPIClient
+    PopoverView["<b>[ PopoverView ]</b><br>SwiftUI popover UI<br>usage bars · settings panel"]
 
     UsageAPIClient["<b>[ UsageAPIClient ]</b><br>GET /api/oauth/usage<br>GET /api/oauth/profile"]
 
