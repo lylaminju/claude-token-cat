@@ -2,19 +2,19 @@
 
 A macOS menu bar app that tracks your Claude Pro/Max session usage with an animated pixel art cat. The cat's behavior changes based on your 5-hour utilization window.
 
-<img src="assets/capture-walking.png" alt="Claude Token Cat walking state" height="354"> <img src="assets/capture-sleeping.png" alt="Claude Token Cat sleeping state" height="354">
+<img src="assets/capture-77percent.png" alt="Claude Token Cat walking state" height="354"> <img src="assets/capture-84percent.png" alt="Claude Token Cat sleeping state" height="354">
 
 ## Cat States
 
 The cat animates in the menu bar based on your session usage:
 
-| Usage      | State       | Animation            |
-| ---------- | ----------- | -------------------- |
-| No session | 🔵 idle     | Sitting, tail wag    |
-| 0 – 39%    | 🟢 jumping  | Energetic jump cycle |
-| 40 – 79%   | 🟡 walking  | Calm stroll          |
-| 80 – 99%   | 🟠 tired    | Lying down, yawning  |
-| 100%       | 🔴 sleeping | Lying down, zZZ...   |
+| Usage      | State       | Animation |
+| ---------- | ----------- | --------- |
+| No session | 🔵 idle     | <img src="assets/cat-idle.gif" alt="idle" height="28"> |
+| 0 – 39%    | 🟢 jumping  | <img src="assets/cat-jumping.gif" alt="jumping" height="28"> |
+| 40 – 79%   | 🟡 walking  | <img src="assets/cat-walking.gif" alt="walking" height="28"> |
+| 80 – 99%   | 🟠 tired    | <img src="assets/cat-tired.gif" alt="tired" height="28"> |
+| 100%       | 🔴 sleeping | <img src="assets/cat-sleeping.gif" alt="sleeping" height="28"> |
 
 ## Features
 

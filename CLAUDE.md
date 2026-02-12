@@ -28,6 +28,21 @@
 - `tools/preview_sprites.py` — Parse and preview sprites from Swift source as ASCII or PNG (`--png --state idle`)
 - `tools/piskel2swift.py` — Convert .piskel files to Swift arrays
 - `tools/live_preview.sh` — Watch Swift file and auto-regenerate preview PNGs on save
+- `tools/screenshot.sh` — Capture PNG screenshots and GIF recordings of the menu bar icon
+
+### Recording Menu Bar GIFs
+
+- Requires a full-screened black terminal behind the menu bar (translucent menu bar shows wallpaper otherwise)
+- Region: `-r 1202,7,70,28` (menu bar icon area including percentage number)
+- Playback FPS (`-p`) should be lower than capture FPS (`-f`) because `screencapture` overhead makes real capture slower than nominal
+
+| State    | Frames | Interval | Command |
+|----------|--------|----------|---------|
+| idle     | 4      | 0.35s    | `./tools/screenshot.sh gif -r 1202,7,70,28 -d 5 -f 5 -p 3` |
+| jumping  | 7      | 0.15s    | `./tools/screenshot.sh gif -r 1202,7,70,28 -d 5 -f 5 -p 3` |
+| walking  | 4      | 0.4s     | `./tools/screenshot.sh gif -r 1202,7,70,28 -d 7 -f 3 -p 2` |
+| tired    | 3      | 0.8s     | `./tools/screenshot.sh gif -r 1202,7,70,28 -d 7 -f 5` |
+| sleeping | 2      | 1.2s     | `./tools/screenshot.sh gif -r 1202,7,70,28 -d 4 -f 5` |
 
 ## Code Quality
 
