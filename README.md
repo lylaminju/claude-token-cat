@@ -146,4 +146,5 @@ OAuth credentials are read from Claude Code's stored authentication (macOS Keych
 - [Claude Code GitHub - Issue #13334](https://github.com/anthropics/claude-code/issues/13334) — confirms `user:profile` OAuth scope is required for usage data
 - [codelynx.dev - Claude Code Usage Limits in Statusline](https://codelynx.dev/posts/claude-code-usage-limits-statusline) — documents how the endpoint was discovered via network interception
 - [Anthropic API Rate Limits (official)](https://docs.anthropic.com/en/api/rate-limits) — official rate limit documentation (different from the usage endpoint above)
+- [opencode-anthropic-auth](https://github.com/anomalyco/opencode-anthropic-auth) — open-source Anthropic OAuth implementation (token refresh flow reference)
 - [Piskel](https://www.piskelapp.com/) — free online sprite editor used to create the pixel art animations

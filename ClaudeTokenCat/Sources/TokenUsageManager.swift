@@ -228,14 +228,37 @@ final class TokenUsageManager: ObservableObject {
 
                 self.lastUpdated = Date()
             } catch UsageAPIError.unauthorized {
-                // Token may have been refreshed by Claude Code - retry with fresh credentials
+                // First, check if Claude Code already refreshed the token
                 if case .success(let freshToken) = ClaudeCodeCredentials.loadAccessToken(), freshToken != accessToken {
                     self.accessToken = freshToken
                     self.fetchProfile(accessToken: freshToken)
                     self.startPolling(accessToken: freshToken)
-                } else {
-                    self.errorMessage = UsageAPIError.unauthorized.errorDescription
+                    return
                 }
+                // Otherwise, attempt our own OAuth token refresh
+                if let refreshToken = ClaudeCodeCredentials.loadRefreshToken() {
+                    do {
+                        let tokenResponse = try await UsageAPIClient.refreshAccessToken(refreshToken: refreshToken)
+                        let expiresAt = ISO8601DateFormatter().string(from: Date().addingTimeInterval(Double(tokenResponse.expires_in)))
+                        let saved = ClaudeCodeCredentials.saveTokens(
+                            accessToken: tokenResponse.access_token,
+                            refreshToken: tokenResponse.refresh_token,
+                            expiresAt: expiresAt
+                        )
+                        if saved {
+                            self.accessToken = tokenResponse.access_token
+                            self.errorMessage = nil
+                            self.fetchProfile(accessToken: tokenResponse.access_token)
+                            self.startPolling(accessToken: tokenResponse.access_token)
+                            return
+                        }
+                    } catch is CancellationError {
+                        return
+                    } catch {
+                        // Refresh failed — fall through to show error
+                    }
+                }
+                self.errorMessage = UsageAPIError.unauthorized.errorDescription
             } catch let error as UsageAPIError {
                 self.errorMessage = error.errorDescription
             } catch is CancellationError {

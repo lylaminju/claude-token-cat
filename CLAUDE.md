@@ -52,3 +52,13 @@
   - Memory leaks (retain cycles, missing `[weak self]` in closures)
   - Inefficient logic (unnecessary allocations, O(n²) where O(n) is possible)
 - Flag any concerns explicitly in your response
+
+### Bug Analysis Checklist
+
+When a user reports a bug, follow this structured process:
+
+1. **Trace the code path** — from trigger to symptom, identify every function in the chain
+2. **Identify root cause** — not just the surface error, but why the code fails
+3. **Search for the same pattern** — grep the codebase for similar error handling gaps
+4. **Check error recovery paths** — what happens when things fail? Is there a fallback?
+5. **Verify the fix prevents recurrence** — don't just patch the symptom

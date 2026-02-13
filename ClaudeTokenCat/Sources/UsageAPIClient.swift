@@ -60,12 +60,22 @@ struct ProfileResponse: Codable {
     let organization: ProfileOrganization?
 }
 
+// MARK: - Token Refresh Response
+
+struct TokenRefreshResponse: Codable {
+    let access_token: String
+    let refresh_token: String
+    let expires_in: Int
+}
+
 // MARK: - API Client
 
 struct UsageAPIClient {
 
     private static let endpoint = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     private static let profileEndpoint = URL(string: "https://api.anthropic.com/api/oauth/profile")!
+    private static let tokenEndpoint = URL(string: "https://console.anthropic.com/v1/oauth/token")!
+    private static let oauthClientID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
 
     private static func authorizedRequest(url: URL, accessToken: String) -> URLRequest {
         var request = URLRequest(url: url)
@@ -117,6 +127,41 @@ struct UsageAPIClient {
         let data = try await performRequest(request)
         do {
             return try JSONDecoder().decode(ProfileResponse.self, from: data)
+        } catch {
+            throw UsageAPIError.decodingError(error)
+        }
+    }
+
+    static func refreshAccessToken(refreshToken: String) async throws -> TokenRefreshResponse {
+        var request = URLRequest(url: tokenEndpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        let body = [
+            "grant_type=refresh_token",
+            "refresh_token=\(refreshToken)",
+            "client_id=\(oauthClientID)"
+        ].joined(separator: "&")
+        request.httpBody = body.data(using: .utf8)
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw UsageAPIError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw UsageAPIError.networkError(URLError(.badServerResponse))
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            throw UsageAPIError.unauthorized
+        }
+
+        do {
+            return try JSONDecoder().decode(TokenRefreshResponse.self, from: data)
         } catch {
             throw UsageAPIError.decodingError(error)
         }
