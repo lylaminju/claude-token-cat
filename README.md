@@ -2,7 +2,7 @@
 
 A macOS menu bar app that tracks your Claude Pro/Max session usage with an animated pixel art cat. The cat's behavior changes based on your 5-hour utilization window.
 
-<img src="assets/capture-77percent.png" alt="Claude Token Cat walking state" height="354"> <img src="assets/capture-84percent.png" alt="Claude Token Cat sleeping state" height="354">
+<img src="assets/app-menu-27percent.gif" alt="Claude Token Cat jumping state" height="313"> <img src="assets/capture-77percent.png" alt="Claude Token Cat walking state" height="313"> <img src="assets/capture-84percent.png" alt="Claude Token Cat sleeping state" height="313">
 
 ## Cat States
 
