@@ -44,6 +44,19 @@
 | tired    | 3      | 0.8s     | `./tools/screenshot.sh gif -r X,5,70,28 -d 7 -f 5` |
 | sleeping | 2      | 1.2s     | `./tools/screenshot.sh gif -r X,5,70,28 -d 4 -f 5` |
 
+## Release Process
+
+1. Create a **local tag**: `git tag vX.Y.Z`
+2. Build: `./build.sh` (reads version from the tag automatically)
+3. Create DMG: `hdiutil create -volname ClaudeTokenCat -srcfolder build/ClaudeTokenCat.app -ov -format UDZO build/ClaudeTokenCat.dmg`
+4. Create GitHub release **with DMG attached in one step**: `gh release create vX.Y.Z build/ClaudeTokenCat.dmg`
+5. The "Update Homebrew Tap" Action runs automatically — do NOT manually update the tap
+
+**Rules:**
+- Never replace assets on an existing release (`--clobber`) — if the binary changes, bump the version
+- Never manually edit the Homebrew tap SHA — always let the Action handle it
+- `Info.plist` version is a baseline; `build.sh` injects the real version from the git tag at build time
+
 ## Code Quality
 
 - Before presenting Swift code changes, self-review for:
