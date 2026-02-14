@@ -31,17 +31,6 @@ cp "$PROJECT_DIR/.build/debug/ClaudeTokenCat" "$APP_DIR/Contents/MacOS/ClaudeTok
 cp "$PROJECT_DIR/ClaudeTokenCat/Info.plist" "$APP_DIR/Contents/Info.plist"
 cp "$PROJECT_DIR/ClaudeTokenCat/Assets.xcassets/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 
-# Inject version from latest git tag (e.g. v1.1.0 → 1.1.0) into the .app bundle
-VERSION=$(git -C "$PROJECT_DIR" describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
-if [ -n "$VERSION" ]; then
-    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_DIR/Contents/Info.plist"
-    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$APP_DIR/Contents/Info.plist"
-    echo "Version: $VERSION"
-fi
-
-# Re-sign after modifying the bundle (ad-hoc, no developer account needed)
-codesign --force --sign - "$APP_DIR"
-
 echo "Build complete: $APP_DIR"
 echo ""
 echo "To run:  open $APP_DIR"
