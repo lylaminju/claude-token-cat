@@ -39,6 +39,9 @@ if [ -n "$VERSION" ]; then
     echo "Version: $VERSION"
 fi
 
+# Re-sign after modifying the bundle (ad-hoc, no developer account needed)
+codesign --force --sign - "$APP_DIR"
+
 echo "Build complete: $APP_DIR"
 echo ""
 echo "To run:  open $APP_DIR"
