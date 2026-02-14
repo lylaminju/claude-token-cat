@@ -50,6 +50,7 @@ struct PopoverView: View {
                 }
                 HStack(spacing: 4) {
                     if let sub = usageManager.subscriptionType {
+                        let badgeColor: Color = sub == "Max" ? .purple : .accentColor
                         Text(sub)
                             .font(.system(size: 9))
                             .fontWeight(.medium)
@@ -57,9 +58,9 @@ struct PopoverView: View {
                             .padding(.vertical, 1)
                             .background(
                                 Capsule()
-                                    .fill(Color.accentColor.opacity(0.15))
+                                    .fill(badgeColor.opacity(0.15))
                             )
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(badgeColor)
                     }
                     if let email = usageManager.accountEmail {
                         Text(email)
