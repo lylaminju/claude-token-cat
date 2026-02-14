@@ -45,6 +45,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menuItem = NSMenuItem()
         menuItem.view = hostingView
         menu.addItem(menuItem)
+
+        NotificationCenter.default.addObserver(forName: .popoverContentChanged, object: nil, queue: .main) { [weak self] _ in
+            self?.resizeHostingView()
+        }
     }
 
     @objc private func showMenu() {
@@ -186,10 +190,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension AppDelegate: NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
-        // Recompute size each time the menu opens so dynamic content is fully visible
+        resizeHostingView()
+    }
+
+    private func resizeHostingView() {
         let fitting = hostingView.fittingSize
         hostingView.setFrameSize(NSSize(width: 280, height: fitting.height))
-
     }
 
     func menuDidClose(_ menu: NSMenu) {

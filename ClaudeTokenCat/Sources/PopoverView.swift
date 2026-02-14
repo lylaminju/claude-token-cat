@@ -16,6 +16,12 @@ struct PopoverView: View {
             }
         }
         .frame(width: 280)
+        .fixedSize(horizontal: false, vertical: true)
+        .onChange(of: showSettings) { _ in
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .popoverContentChanged, object: nil)
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .popoverDidClose)) { _ in
             showSettings = false
         }
@@ -302,6 +308,12 @@ struct PopoverView: View {
                     .font(.headline)
 
                 Spacer()
+
+                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                    Text("v\(version)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary.opacity(0.6))
+                }
             }
 
             Divider()
@@ -456,4 +468,5 @@ extension View {
 
 extension Notification.Name {
     static let popoverDidClose = Notification.Name("popoverDidClose")
+    static let popoverContentChanged = Notification.Name("popoverContentChanged")
 }
