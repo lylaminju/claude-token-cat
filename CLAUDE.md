@@ -46,16 +46,17 @@
 
 ## Release Process
 
-1. Create a **local tag**: `git tag vX.Y.Z`
-2. Build: `./build.sh` (reads version from the tag automatically)
-3. Create DMG: `hdiutil create -volname ClaudeTokenCat -srcfolder build/ClaudeTokenCat.app -ov -format UDZO build/ClaudeTokenCat.dmg`
-4. Create GitHub release **with DMG attached in one step**: `gh release create vX.Y.Z build/ClaudeTokenCat.dmg`
-5. The "Update Homebrew Tap" Action runs automatically — do NOT manually update the tap
+1. **Bump version** in `ClaudeTokenCat/Info.plist` (`CFBundleShortVersionString` + `CFBundleVersion`) and commit
+2. Create a **local tag**: `git tag vX.Y.Z`
+3. Build: `./build.sh`
+4. Create DMG: `hdiutil create -volname ClaudeTokenCat -srcfolder build/ClaudeTokenCat.app -ov -format UDZO build/ClaudeTokenCat.dmg`
+5. Create GitHub release **with DMG attached in one step**: `gh release create vX.Y.Z build/ClaudeTokenCat.dmg`
+6. The "Update Homebrew Tap" Action runs automatically — do NOT manually update the tap
 
 **Rules:**
 - Never replace assets on an existing release (`--clobber`) — if the binary changes, bump the version
 - Never manually edit the Homebrew tap SHA — always let the Action handle it
-- `Info.plist` version is a baseline; `build.sh` injects the real version from the git tag at build time
+- `Info.plist` version must be manually bumped to match the release tag before building (no auto-injection)
 
 ## Code Quality
 
